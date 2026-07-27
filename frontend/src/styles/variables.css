@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --navy: #0d1b3e;
+  --accent: #1a56a0;
+  --success: #1a7a4a;
+  --danger: #9b1c2e;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --border: #d1d5db;
+  --muted-bg: #eff2f7;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}

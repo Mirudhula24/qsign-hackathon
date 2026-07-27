@@ -1,0 +1,17 @@
+/node_modules/
+/dist/
+/.vite/
+/coverage/
+/*.log
+/*.tsbuildinfo
+/package-lock.json
+/vite.config.js
+/vite.config.d.ts
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+/frontend/coverage/
+/frontend/*.log
+/frontend/*.tsbuildinfo
+/frontend/vite.config.js
+/frontend/vite.config.d.ts
