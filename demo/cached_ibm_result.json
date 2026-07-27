@@ -1,0 +1,6 @@
+{
+  "job_id": "d9jq9lbhdfks73cin280",
+  "backend": "ibm_marrakesh",
+  "shots": 1024,
+  "note": "Real IBM Quantum hardware - pre-run proof for hackathon demo"
+}
