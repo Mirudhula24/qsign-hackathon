@@ -17,6 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+notarizations = []
+
 @app.get("/health")
 def health():
     return {"status": "QSIGN API running"}
@@ -27,11 +29,24 @@ async def notarize(file: UploadFile = File(...)):
     doc_hash = hash_document(file_bytes)
     bell_data = run_bell_circuit()
     certificate = create_certificate(doc_hash, bell_data)
+
+    # Save to audit log
+    notarizations.append({
+        "filename": file.filename,
+        "timestamp": certificate["timestamp"],
+        "chsh_value": bell_data["chsh_value"],
+        "status": "Verified"
+    })
+
     return {
         "status": "success",
         "filename": file.filename,
         "certificate": certificate,
     }
+
+@app.get("/audit")
+def audit():
+    return {"notarizations": notarizations}
 
 @app.post("/verify")
 async def verify(
