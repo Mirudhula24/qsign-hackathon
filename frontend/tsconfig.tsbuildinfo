@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/api/client.ts","./src/components/filedropzone.tsx","./src/components/navbar.tsx","./src/components/quantumscorecard.tsx","./src/components/resultcard.tsx","./src/components/statussteps.tsx","./src/pages/auditlog.tsx","./src/pages/notarize.tsx","./src/pages/verify.tsx","./src/types/index.ts"],"version":"5.9.3"}
