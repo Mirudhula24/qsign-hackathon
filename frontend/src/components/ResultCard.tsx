@@ -22,7 +22,8 @@ function getTimestamp(result: VerifyResult) {
 
 export default function ResultCard({ result }: ResultCardProps) {
   const signatureOk = getSignatureState(result);
-  const quantumOk = !result.bell_violated;
+  // backend uses `bell_violated: true` when the certificate *did* violate (i.e., quantum)
+  const quantumOk = !!result.bell_violated;
   const overallPassed = result.overall;
   const subtitle = overallPassed
     ? 'All three checks passed successfully.'

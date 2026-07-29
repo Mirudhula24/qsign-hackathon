@@ -1,0 +1,17 @@
+{
+  "document_hash": "da06b15436467a2727ba3a52db7cd9d01b0d9548c758d5cb3fb212df67044d67",
+  "timestamp": "2026-07-29T22:51:03Z",
+  "quantum_proof": {
+    "circuit": "Bell_CHSH",
+    "chsh_value": 2.8235,
+    "classical_bound": 2.0,
+    "quantum_maximum": 2.8284,
+    "bell_violated": true,
+    "backend": "AerSimulator",
+    "shots": 8192
+  },
+  "signature": {
+    "scheme": "SHA256-placeholder",
+    "payload_hash": "50f46d749077c6e9da3ba2b459d7e2e1118a26fc177433d93d9902b94dd22883"
+  }
+}

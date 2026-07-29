@@ -10,7 +10,13 @@ function getFingerprint(certificate: Certificate) {
 }
 
 function getScore(certificate: Certificate) {
-  return typeof certificate.chsh_score === 'number' ? certificate.chsh_score : 0;
+  // backend embeds CHSH in certificate.quantum_proof.chsh_value
+  if (certificate?.quantum_proof && typeof certificate.quantum_proof.chsh_value === 'number') {
+    return certificate.quantum_proof.chsh_value;
+  }
+
+  if (typeof certificate.chsh_score === 'number') return certificate.chsh_score;
+  return 0;
 }
 
 export default function Notarize() {
