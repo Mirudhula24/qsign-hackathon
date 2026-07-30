@@ -655,10 +655,12 @@ function QuantumProofPage() {
         Quantum Proof
       </h2>
       <p style={{ fontSize: 14, color: "#4A5568", marginBottom: 24, lineHeight: 1.6 }}>
-        Every notarization runs a real Bell–CHSH experiment. This is what that experiment
-        measures: the correlation between two entangled qubits as we vary the measurement
-        angle. The dots are live simulator measurements — they trace the quantum prediction
-        and pull away from anything a classical system could produce.
+        Every notarization runs a real Bell–CHSH experiment. The CHSH score in the panel
+        below was measured on <b>real IBM Quantum hardware</b>; the full angle sweep in the
+        chart is run on the simulator, since measuring 13 separate angles on a live QPU would
+        be slow and costly. Together they show the same physics: the correlation between two
+        entangled qubits traces the quantum prediction and pulls away from anything a classical
+        system could produce.
       </p>
 
       <HardwareProvenance hw={hw} />
