@@ -1,35 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ============================================================================
-   QSIGN Design System — "Cool Legal Registry"
-   Navy authority + cool paper + slate surfaces + earth-brown seal/CTA.
-   One token set. Every component reads from here. No component-level colours.
+   QSIGN Design System — "Legal Registry" (warm)
+   Navy authority + warm cream paper + sage surfaces + earth-brown seal/CTA.
+   One token set. Contrast is chosen so every label stays legible on its
+   surface AND on hover.
    ========================================================================== */
 :root {
   /* --- Palette --- */
-  --navy: #0B2D52;            /* primary: navbar, headings, icons, emphasis */
+  --navy: #0B2D52;            /* navbar, headings, icons, emphasis */
   --navy-2: #123A64;
-  --bg: #EEF1F5;             /* cool page background */
-  --surface: #E3E8EE;        /* secondary surfaces, info cards, footer */
-  --surface-2: #E9EDF2;
-  --paper: #F6F3EC;          /* certificate parchment (kept warm for the document only) */
-  --card: #FFFFFF;           /* cards, tables, inputs */
-  --brown: #99693C;          /* earth brown: primary CTA, wax seal, small accents */
-  --brown-strong: #7E5530;
-  --brown-soft: #F1E9DF;
-  --border: #D6D2C8;         /* every border */
-  --border-cool: #D5DCE4;
-  --text: #1F2937;           /* primary text */
-  --text-secondary: #6B7280; /* secondary text */
+  --bg: #F4E4C1;             /* warm cream page background */
+  --surface: #D7D7BE;        /* sage — cards, containers, footer */
+  --surface-2: #E4E3CF;      /* lighter sage — dropzone, alt rows */
+  --paper: #FBF6E9;          /* certificate parchment */
+  --card: #FFFFFF;           /* white — tables, inputs, verify result */
+  --brown: #99693C;          /* earth brown: CTA, wax seal, icon tiles, accents */
+  --brown-strong: #7C5330;
+  --brown-soft: #EFE2CE;
+  --border: #C7BC9C;         /* warm border, visible on cream + sage */
+  --border-cool: #C7BC9C;
+  --text: #2A2620;           /* primary text — strong contrast on cream/sage */
+  --text-secondary: #5E5644; /* secondary text — still legible on sage */
   --success: #2F855A;
-  --success-bg: #E7F2EC;
+  --success-bg: #E4EFE3;
   --error: #C53030;
-  --error-bg: #FBEBEB;
+  --error-bg: #F8E7DD;
 
   /* --- Typography --- */
-  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;   /* headings */
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* body */
-  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace; /* data */
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
 
   /* --- Radius --- */
   --radius-card: 18px;
@@ -38,26 +39,19 @@
   --radius-pill: 999px;
 
   /* --- Shadow (single system) --- */
-  --shadow: 0 8px 24px rgba(11, 45, 82, 0.08);
-  --shadow-sm: 0 2px 8px rgba(11, 45, 82, 0.06);
-  --shadow-lg: 0 16px 40px rgba(11, 45, 82, 0.12);
+  --shadow: 0 8px 24px rgba(43, 34, 20, 0.10);
+  --shadow-sm: 0 2px 8px rgba(43, 34, 20, 0.07);
+  --shadow-lg: 0 16px 40px rgba(43, 34, 20, 0.14);
 
-  /* --- Spacing scale (8px system) --- */
-  --sp-1: 8px;
-  --sp-2: 16px;
-  --sp-3: 24px;
-  --sp-4: 32px;
-  --sp-5: 40px;
-  --sp-6: 48px;
-  --sp-8: 64px;
+  /* --- Spacing (8px system) --- */
+  --sp-1: 8px; --sp-2: 16px; --sp-3: 24px; --sp-4: 32px;
+  --sp-5: 40px; --sp-6: 48px; --sp-8: 64px;
 
   --maxw: 1440px;
   --page-pad: 32px;
-
-  /* --- Motion --- */
   --t: 150ms ease;
 
-  /* legacy aliases so older class references keep resolving */
+  /* legacy aliases */
   --ink: var(--navy);
   --ink-secondary: var(--text-secondary);
   --accent: var(--brown);
