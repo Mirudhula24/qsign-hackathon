@@ -16,7 +16,10 @@ import platform
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from benchmarks import bench_signatures, bench_chsh, bench_randomness
+from benchmarks import (
+    bench_signatures, bench_chsh, bench_randomness,
+    bench_transpile, bench_error_mitigation,
+)
 from benchmarks.common import RESULTS_DIR, ensure_results_dir
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -48,6 +51,10 @@ def main():
     chsh_rows, opt = bench_chsh.run()
     print("Running randomness benchmark...")
     rnd_rows = bench_randomness.run()
+    print("Running transpilation optimization benchmark...")
+    tr_rows = bench_transpile.run()
+    print("Running error-mitigation benchmark...")
+    em_rows = bench_error_mitigation.run()
 
     report = [
         "# QSIGN Benchmark Report",
@@ -68,6 +75,14 @@ def main():
         "![optimization](benchmarks/results/chsh_optimization.png)",
         "",
         "## 3. " + bench_randomness.summary_markdown(rnd_rows).lstrip("# "),
+        "",
+        "## 4. Quantum Optimization",
+        "",
+        "### 4a. " + bench_transpile.summary_markdown(tr_rows).lstrip("# "),
+        "![transpile](benchmarks/results/transpile_optimization.png)",
+        "",
+        "### 4b. " + bench_error_mitigation.summary_markdown(em_rows).lstrip("# "),
+        "![mitigation](benchmarks/results/error_mitigation.png)",
         "",
         "## Reproducibility",
         "- Median of fixed repeats after warmups (see `benchmarks/common.py`).",

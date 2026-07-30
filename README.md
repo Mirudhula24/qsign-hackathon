@@ -131,6 +131,7 @@ QSIGN is benchmarked against strong, production-grade classical baselines. Full 
 | [Technical](docs/TECHNICAL.md) | Running it, optimizations, circuit & crypto internals |
 | [API](docs/API.md) | Every endpoint, request/response shapes |
 | [Quantum Advantage](docs/QUANTUM_ADVANTAGE.md) | Where quantum helps vs where classical suffices |
+| [Quantum Optimization](docs/QUANTUM_OPTIMIZATION.md) | Transpilation, error mitigation, shot & pipeline optimization |
 | [Classical Comparison](docs/CLASSICAL_COMPARISON.md) | Baselines, complexity, measured results |
 | [Scalability](docs/SCALABILITY.md) | Issuance vs verification scaling, bottlenecks |
 | [Benchmarks](BENCHMARKS.md) | Auto-generated report with tables & charts |
