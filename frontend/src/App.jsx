@@ -115,8 +115,11 @@ function NotarizePage() {
         Notarize a Document
       </h2>
       <p style={{ fontSize: 14, color: "#4A5568", marginBottom: 24, lineHeight: 1.6 }}>
-        Your document will receive a quantum-certified signature. The randomness
-        is certified by the Bell–CHSH inequality — a law of physics.
+        Notarizing issues a tamper-proof seal for <b>this exact document</b> — a
+        quantum-backed proof of its integrity and origin, signed by the QSIGN
+        authority. It certifies the file, not the truth of its contents (like a
+        notary's stamp). Altered documents and forged certificates are detected in
+        the <b>Verify</b> tab.
       </p>
 
       <DropZone onFile={setFile} file={file} label="Click to upload or drag and drop" />
@@ -191,6 +194,9 @@ function NotarizePage() {
               <div><b>Backend:</b> {cert.quantum_proof?.backend}</div>
               <div><b>Bell violated:</b> {cert.quantum_proof?.bell_violated ? "Yes ✓" : "No ✗"}</div>
               <div><b>Document-bound:</b> {cert.quantum_proof?.document_bound ? "Yes ✓ (angles derived from hash)" : "No"}</div>
+              {cert.signature?.issuer && (
+                <div><b>Issuer:</b> QSIGN authority · {cert.signature.issuer}</div>
+              )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                 <span><b>Signature:</b> {cert.signature?.scheme}</span>
                 {isPostQuantum(cert.signature?.scheme) && (
@@ -224,6 +230,7 @@ function firstFailure(r) {
   if (!r.bell_violated) return `the Bell–CHSH score ${r.chsh_value} is below the classical bound of 2.0.`;
   if (r.document_bound === false) return "the circuit angles were not derived from this document — a replayed proof.";
   if (!r.signature_valid) return "the post-quantum signature is invalid.";
+  if (r.issuer_trusted === false) return "the certificate was not signed by the QSIGN authority — an unrecognized issuer.";
   return "one or more checks failed.";
 }
 
@@ -332,7 +339,7 @@ function VerifyPage() {
             </div>
             <div style={{ fontSize: 13, color: pass ? "#2D6A4F" : "#7B1D2E" }}>
               {pass
-                ? "All checks passed: fingerprint, quantum origin, document-bound circuit, and post-quantum signature."
+                ? "All checks passed: fingerprint, quantum origin, document-bound circuit, post-quantum signature, and trusted issuer."
                 : `Rejected because ${firstFailure(result)}`}
             </div>
           </div>
@@ -363,6 +370,15 @@ function VerifyPage() {
                 ? `Valid · ${result.signature_scheme || "signed"}`
                 : "Invalid"}
             />
+            {result.issuer_trusted !== null && result.issuer_trusted !== undefined && (
+              <CheckRow
+                label="Trusted Issuer"
+                ok={result.issuer_trusted}
+                detail={result.issuer_trusted
+                  ? `QSIGN authority · ${result.issuer_fingerprint || ""}`
+                  : "Unrecognized issuer — not signed by QSIGN"}
+              />
+            )}
           </div>
 
           {verdict && (

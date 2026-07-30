@@ -8,7 +8,10 @@ import hashlib
 sys.path.append(os.path.dirname(__file__))
 from fastapi import Body
 from circuit import run_bell_circuit, correlation_curve
-from crypto import hash_document, create_certificate, verify_certificate
+from crypto import (
+    hash_document, create_certificate, verify_certificate,
+    issuer_public_key_b64, issuer_fingerprint, SIGNATURE_SCHEME,
+)
 from hardware import load_hardware_result
 from granite import generate_forensic_verdict
 
@@ -98,6 +101,16 @@ def correlation():
 def hardware():
     # Real IBM Quantum hardware provenance (cached), for the proof panel.
     return {"status": "success", "data": load_hardware_result()}
+
+@app.get("/issuer")
+def issuer():
+    # Public identity of this QSIGN authority. Verifiers can pin this key.
+    return {
+        "status": "success",
+        "scheme": SIGNATURE_SCHEME,
+        "fingerprint": issuer_fingerprint(),
+        "public_key": issuer_public_key_b64(),
+    }
 
 @app.post("/verify")
 async def verify(

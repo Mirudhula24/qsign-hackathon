@@ -2,6 +2,7 @@ import hashlib
 import json
 import time
 import base64
+import os
 
 # ---------------------------------------------------------------------------
 # Post-quantum signature provider detection
@@ -37,25 +38,60 @@ except ImportError:
         SIGNATURE_SCHEME = "SHA256-fallback"
 
 # ---------------------------------------------------------------------------
-# Persistent signing key
+# Persistent issuer identity
 #
-# One keypair is generated when the process starts and reused for every
-# certificate. The private key never leaves the server; the public key is
-# embedded in each certificate so it can be verified offline. This is what
-# answers "what stops me forging a certificate?" -- a forger cannot produce a
-# signature that verifies against QSIGN's public key without the private key
-# that only this server holds.
+# QSIGN is an authority: certificates are only meaningful if they provably come
+# from THIS issuer. So the signing keypair is generated once and PERSISTED to
+# disk (issuer_key.json, git-ignored -- the secret never leaves the machine and
+# is never committed). It is reused across restarts, giving QSIGN a stable
+# public identity that verifiers can pin. The public key and its fingerprint are
+# published at /issuer; verification checks that a certificate was signed by
+# this exact authority, not by some attacker's self-generated keypair.
 # ---------------------------------------------------------------------------
+
+_ISSUER_KEY_PATH = os.path.join(os.path.dirname(__file__), "issuer_key.json")
 
 _server_public_key = None
 _server_secret_key = None
 _server_sig = None
 
-if PQC_PROVIDER == "dilithium-py":
-    _server_public_key, _server_secret_key = _ml_dsa.keygen()
-elif PQC_PROVIDER == "oqs":
-    _server_sig = _oqs.Signature("Dilithium3")
-    _server_public_key = _server_sig.generate_keypair()
+
+def _load_or_create_issuer_key():
+    global _server_public_key, _server_secret_key, _server_sig
+    if PQC_PROVIDER == "dilithium-py":
+        if os.path.exists(_ISSUER_KEY_PATH):
+            with open(_ISSUER_KEY_PATH) as f:
+                d = json.load(f)
+            _server_public_key = base64.b64decode(d["public_key"])
+            _server_secret_key = base64.b64decode(d["secret_key"])
+        else:
+            _server_public_key, _server_secret_key = _ml_dsa.keygen()
+            with open(_ISSUER_KEY_PATH, "w") as f:
+                json.dump({
+                    "scheme": SIGNATURE_SCHEME,
+                    "public_key": base64.b64encode(_server_public_key).decode(),
+                    "secret_key": base64.b64encode(_server_secret_key).decode(),
+                    "created": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }, f)
+    elif PQC_PROVIDER == "oqs":
+        # oqs keeps the secret inside the Signature object; ephemeral per process.
+        _server_sig = _oqs.Signature("Dilithium3")
+        _server_public_key = _server_sig.generate_keypair()
+
+
+_load_or_create_issuer_key()
+
+
+def issuer_public_key_b64():
+    """Base64 public key of the QSIGN issuer, or None if no PQC provider."""
+    return base64.b64encode(_server_public_key).decode() if _server_public_key else None
+
+
+def issuer_fingerprint():
+    """Short, human-readable fingerprint of the issuer public key."""
+    if not _server_public_key:
+        return None
+    return hashlib.sha256(_server_public_key).hexdigest()[:16]
 
 
 def hash_document(file_bytes):
@@ -79,6 +115,7 @@ def _sign(payload_bytes):
         signature = _ml_dsa.sign(_server_secret_key, payload_bytes)
         return {
             "scheme": SIGNATURE_SCHEME,
+            "issuer": issuer_fingerprint(),
             "public_key": base64.b64encode(_server_public_key).decode(),
             "signature_bytes": base64.b64encode(signature).decode(),
         }
@@ -86,6 +123,7 @@ def _sign(payload_bytes):
         signature = _server_sig.sign(payload_bytes)
         return {
             "scheme": SIGNATURE_SCHEME,
+            "issuer": issuer_fingerprint(),
             "public_key": base64.b64encode(_server_public_key).decode(),
             "signature_bytes": base64.b64encode(signature).decode(),
         }
@@ -171,6 +209,19 @@ def verify_certificate(file_bytes, certificate):
 
     results["signature_scheme"] = certificate["signature"].get("scheme")
 
+    # Check 3b: trusted issuer. The certificate's public key must be THIS
+    # authority's key -- proving it was signed by QSIGN, not by an attacker who
+    # generated their own keypair and signed a self-made certificate.
+    cert_pk = certificate["signature"].get("public_key")
+    trusted_pk = issuer_public_key_b64()
+    if cert_pk and trusted_pk:
+        results["issuer_trusted"] = (cert_pk == trusted_pk)
+        results["issuer_fingerprint"] = issuer_fingerprint()
+        results["issuer_expected"] = issuer_fingerprint()
+    else:
+        # No PQC key infrastructure (e.g. SHA256 fallback): not applicable.
+        results["issuer_trusted"] = None
+
     # Check 4: document-bound circuit. The measurement angles recorded in the
     # certificate must match the angles our derivation produces from THIS
     # document's hash. This proves the quantum circuit was parameterized by the
@@ -189,12 +240,16 @@ def verify_certificate(file_bytes, certificate):
         # Legacy certificate without document binding: not penalized.
         results["document_bound"] = True
 
-    results["overall"] = all([
+    checks = [
         results["hash_match"],
         results["bell_violated"],
         results["signature_valid"],
         results["document_bound"],
-    ])
+    ]
+    # Only gate on issuer trust when a public key is present to check.
+    if results["issuer_trusted"] is not None:
+        checks.append(results["issuer_trusted"])
+    results["overall"] = all(checks)
 
     return results
 
