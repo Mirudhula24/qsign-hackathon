@@ -28,7 +28,7 @@ async def notarize(file: UploadFile = File(...)):
     file_bytes = await file.read()
     doc_hash = hash_document(file_bytes)
     bell_data = run_bell_circuit()
-    certificate = create_certificate(doc_hash, bell_data)
+    certificate = create_certificate(doc_hash, bell_data, file.filename)
 
     # Save to audit log
     notarizations.append({

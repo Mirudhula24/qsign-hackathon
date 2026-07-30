@@ -1,4 +1,4 @@
-import type { Certificate, VerifyResult } from '../types';
+import type { AuditRow, Certificate, VerifyResult } from '../types';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -55,4 +55,18 @@ export async function checkHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function getAuditLog(): Promise<AuditRow[]> {
+  const res = await requestJson('/audit');
+  if (!res || !Array.isArray(res.notarizations)) {
+    throw new Error('Unexpected response from QSIGN /audit endpoint');
+  }
+
+  return res.notarizations.map((entry: Record<string, unknown>) => ({
+    time: typeof entry.timestamp === 'string' ? entry.timestamp : '—',
+    document: typeof entry.filename === 'string' ? entry.filename : 'Unnamed document',
+    chshScore: typeof entry.chsh_value === 'number' ? entry.chsh_value : Number(entry.chsh_value ?? 0),
+    status: entry.status === 'Rejected' ? 'Rejected' : 'Verified'
+  }));
 }

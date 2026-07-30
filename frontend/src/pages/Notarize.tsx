@@ -1,32 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { notarize } from '../api/client';
-import FileDropzone from '../components/FileDropzone';
-import QuantumScoreCard from '../components/QuantumScoreCard';
-import StatusSteps from '../components/StatusSteps';
+import CertificateDocument from '../components/CertificateDocument';
+import Dropzone from '../components/Dropzone';
 import type { Certificate } from '../types';
 
-function getFingerprint(certificate: Certificate) {
-  return certificate.document_hash ?? certificate.fingerprint ?? certificate.sha256 ?? 'Fingerprint unavailable';
-}
-
-function getScore(certificate: Certificate) {
-  // backend embeds CHSH in certificate.quantum_proof.chsh_value
-  if (certificate?.quantum_proof && typeof certificate.quantum_proof.chsh_value === 'number') {
-    return certificate.quantum_proof.chsh_value;
-  }
-
-  if (typeof certificate.chsh_score === 'number') return certificate.chsh_score;
-  return 0;
-}
+const useCases = [
+  { title: 'Government Registries', text: 'Create a durable record for land, legal, or public filings.' },
+  { title: 'Court Evidence', text: 'Attach a physical-physics verification trail to chain-of-custody materials.' },
+  { title: 'Medical Records', text: 'Bind clinical documentation to an auditable origin state.' }
+];
 
 export default function Notarize() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [certificate, setCertificate] = useState<Certificate | null>(null);
-  const [completedSteps, setCompletedSteps] = useState([false, false, false]);
-
-  const score = useMemo(() => getScore(certificate ?? {}), [certificate]);
 
   const handleSubmit = async () => {
     if (!file) {
@@ -36,26 +24,20 @@ export default function Notarize() {
 
     setError('');
     setIsLoading(true);
-    setCompletedSteps([true, false, false]);
 
     try {
       const result = await notarize(file);
       setCertificate(result);
-      setCompletedSteps([true, true, true]);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'An unexpected error occurred.');
       setCertificate(null);
-      setCompletedSteps([false, false, false]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDownload = () => {
-    if (!certificate) {
-      return;
-    }
-
+    if (!certificate) return;
     const blob = new Blob([JSON.stringify(certificate, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -69,13 +51,22 @@ export default function Notarize() {
     <section className="page page--narrow">
       <header className="page__header">
         <h1 className="page__title">Notarize a Document</h1>
-        <p className="page__subtitle">Your document will receive a quantum-certified signature, verified against the Bell-CHSH inequality.</p>
+        <p className="page__subtitle">Your document will receive a quantum-certified signature validated against the Bell-CHSH inequality.</p>
       </header>
 
-      <div className="stack">
-        <FileDropzone
-          label="Document Upload"
-          subtext="Any file format accepted"
+      <div className="use-case-grid">
+        {useCases.map((item) => (
+          <article key={item.title} className="use-case-card">
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="card-shell stack">
+        <Dropzone
+          label="Document upload"
+          hint="Any file format accepted"
           file={file}
           onFileSelect={setFile}
         />
@@ -86,24 +77,9 @@ export default function Notarize() {
           {isLoading ? 'Generating certificate…' : 'Issue Certificate'}
         </button>
 
-        {isLoading ? <p className="inline-message">Generating certificate…</p> : null}
+        {isLoading ? <p className="helper-text">Generating certificate…</p> : null}
 
-        {certificate ? (
-          <>
-            <div className="certificate-summary">
-              <p className="section-label">DOCUMENT FINGERPRINT</p>
-              <div className="mono certificate-summary__fingerprint">{getFingerprint(certificate)}</div>
-            </div>
-
-            <QuantumScoreCard score={score} />
-
-            <StatusSteps completed={completedSteps} />
-
-            <button className="button button--secondary" type="button" onClick={handleDownload}>
-              Download Certificate
-            </button>
-          </>
-        ) : null}
+        {certificate ? <CertificateDocument certificate={certificate as Record<string, unknown>} onDownload={handleDownload} /> : null}
       </div>
     </section>
   );

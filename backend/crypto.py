@@ -5,7 +5,7 @@ import time
 def hash_document(file_bytes):
     return hashlib.sha256(file_bytes).hexdigest()
 
-def create_certificate(document_hash, bell_data):
+def create_certificate(document_hash, bell_data, filename=None):
     payload = {
         "document_hash": document_hash,
         "chsh_value": bell_data["chsh_value"],
@@ -14,6 +14,7 @@ def create_certificate(document_hash, bell_data):
     payload_str = json.dumps(payload, sort_keys=True)
     signature = hashlib.sha256(payload_str.encode()).hexdigest()
     return {
+        "filename": filename,
         "document_hash": document_hash,
         "timestamp": payload["timestamp"],
         "quantum_proof": {
@@ -24,6 +25,7 @@ def create_certificate(document_hash, bell_data):
             "bell_violated": bell_data["bell_violated"],
             "backend": bell_data["backend"],
             "shots": bell_data["shots"],
+            "correlation_curve": bell_data.get("correlation_curve", []),
         },
         "signature": {
             "scheme": "SHA256-placeholder",

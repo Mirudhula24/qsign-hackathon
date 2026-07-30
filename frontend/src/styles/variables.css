@@ -1,17 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&display=swap');
 
 :root {
-  --bg: #f4f6f9;
-  --card-bg: #ffffff;
-  --navy: #0d1b3e;
-  --accent: #1a56a0;
-  --success: #1a7a4a;
-  --danger: #9b1c2e;
-  --text-primary: #1a1a2e;
-  --text-secondary: #4a5568;
-  --border: #d1d5db;
-  --muted-bg: #eff2f7;
+  --bg: #FAF8F5;
+  --card-bg: #FFFFFF;
+  --ink: #2E1A47;
+  --ink-secondary: #6B5D75;
+  --accent: #7C3AED;
+  --success: #0F766E;
+  --success-bg: #E4F3F1;
+  --danger: #B4234A;
+  --danger-bg: #FBE9EE;
+  --border: #E7E1DB;
+  --row-alt: #F2EEE8;
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif: 'Fraunces', 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* legacy aliases */
+  --navy: var(--ink);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-secondary);
+  --muted-bg: var(--row-alt);
+  --danger-red: var(--danger);
 }

@@ -13,6 +13,7 @@ export interface Certificate {
     quantum_maximum?: number;
     backend?: string;
     shots?: number;
+    correlation_curve?: Array<{ angle: number; value: number }>;
   };
   signature?: {
     scheme?: string;

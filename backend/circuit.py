@@ -23,6 +23,16 @@ def measure_chsh_correlator(theta_a, theta_b, shots=8192):
         corr += val_a * val_b * count
     return corr / shots
 
+def compute_correlation_curve(shots=8192):
+    """Compute correlation curve by varying angle_b while holding angle_a fixed."""
+    angle_a = 0
+    angle_b_values = np.linspace(0, np.pi, 16)  # 16 points from 0 to π
+    correlations = []
+    for angle_b in angle_b_values:
+        corr = measure_chsh_correlator(angle_a, angle_b, shots)
+        correlations.append({"angle": round(float(angle_b * 180 / np.pi), 1), "value": round(corr, 4)})
+    return correlations
+
 def run_bell_circuit():
     shots = 8192
     a  = 0
@@ -41,6 +51,8 @@ def run_bell_circuit():
         "bell_violated": abs(S) > 2.0,
         "backend": "AerSimulator",
         "shots": shots,
+        "angles": {"a": a, "a2": a2, "b": b, "b2": b2},
+        "correlation_curve": compute_correlation_curve(shots),
     }
 
 if __name__ == "__main__":
