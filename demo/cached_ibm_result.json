@@ -1,6 +1,50 @@
 {
-  "job_id": "d9jq9lbhdfks73cin280",
-  "backend": "ibm_marrakesh",
-  "shots": 1024,
-  "note": "Real IBM Quantum hardware - pre-run proof for hackathon demo"
+  "status": "complete",
+  "source": "simulator_dryrun",
+  "backend": "AerSimulator",
+  "job_id": "dry-run-local",
+  "shots": 4096,
+  "timestamp": "2026-07-30T11:54:00Z",
+  "chsh_value": 2.8311,
+  "classical_bound": 2.0,
+  "quantum_maximum": 2.8284,
+  "bell_violated": true,
+  "correlators": {
+    "E_ab": 0.7251,
+    "E_ab2": -0.7056,
+    "E_a2b": 0.7012,
+    "E_a2b2": 0.6992
+  },
+  "counts": {
+    "E_ab": {
+      "00": 1742,
+      "11": 1791,
+      "01": 280,
+      "10": 283
+    },
+    "E_ab2": {
+      "01": 1755,
+      "10": 1738,
+      "11": 304,
+      "00": 299
+    },
+    "E_a2b": {
+      "00": 1744,
+      "10": 296,
+      "11": 1740,
+      "01": 316
+    },
+    "E_a2b2": {
+      "00": 1746,
+      "11": 1734,
+      "01": 319,
+      "10": 297
+    }
+  },
+  "note": "Local AerSimulator dry-run for validation (NOT real hardware). Run backend/real_hardware.py --run with IBM credentials to replace this with a genuine ibm hardware CHSH.",
+  "prior_hardware_job": {
+    "job_id": "d9jq9lbhdfks73cin280",
+    "backend": "ibm_marrakesh",
+    "note": "A Bell circuit was previously submitted to real IBM hardware. Retrieve its counts with: python backend/real_hardware.py --retrieve d9jq9lbhdfks73cin280 (note: that job was a single correlator; --run submits all 4 for a full CHSH)."
+  }
 }
