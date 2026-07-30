@@ -247,6 +247,15 @@ function VerifyPage() {
   const [forgeResult, setForgeResult] = useState(null);
   const [forgeLoading, setForgeLoading] = useState(false);
 
+  // Whenever a certificate is uploaded, load its contents into the forge box —
+  // so it works whether the judge uploads before or after entering forge mode.
+  useEffect(() => {
+    if (!certFile) return;
+    let alive = true;
+    certFile.text().then(t => { if (alive) { setForgeJson(t); setForgeResult(null); } }).catch(() => {});
+    return () => { alive = false; };
+  }, [certFile]);
+
   async function handleVerify() {
     if (!docFile || !certFile) return;
     setLoading(true); setError(null); setResult(null); setVerdict(null);
@@ -294,6 +303,12 @@ function VerifyPage() {
 
   async function attemptForge() {
     if (!docFile) return;
+    try {
+      JSON.parse(forgeJson);
+    } catch {
+      setForgeResult({ error: "The certificate text is not valid JSON — upload a certificate, or fix your edits." });
+      return;
+    }
     setForgeLoading(true); setForgeResult(null);
     try {
       const blob = new Blob([forgeJson], { type: "application/json" });
