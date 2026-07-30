@@ -5,3 +5,4 @@ fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
 numpy==2.4.1
+dilithium-py==1.4.0

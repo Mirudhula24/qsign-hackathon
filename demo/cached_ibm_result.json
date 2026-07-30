@@ -1,6 +1,45 @@
 {
-  "job_id": "d9jq9lbhdfks73cin280",
+  "status": "complete",
+  "source": "ibm_hardware",
   "backend": "ibm_marrakesh",
-  "shots": 1024,
-  "note": "Real IBM Quantum hardware - pre-run proof for hackathon demo"
+  "job_id": "d9lgds8ii2cc73ehfjtg",
+  "shots": 4096,
+  "timestamp": "2026-07-30T13:40:36Z",
+  "chsh_value": 2.6958,
+  "classical_bound": 2.0,
+  "quantum_maximum": 2.8284,
+  "bell_violated": true,
+  "correlators": {
+    "E_ab": 0.6772,
+    "E_ab2": -0.6646,
+    "E_a2b": 0.6426,
+    "E_a2b2": 0.7114
+  },
+  "counts": {
+    "E_ab": {
+      "11": 1689,
+      "00": 1746,
+      "01": 316,
+      "10": 345
+    },
+    "E_ab2": {
+      "10": 1693,
+      "00": 383,
+      "01": 1716,
+      "11": 304
+    },
+    "E_a2b": {
+      "00": 1765,
+      "11": 1599,
+      "10": 352,
+      "01": 380
+    },
+    "E_a2b2": {
+      "00": 1828,
+      "11": 1677,
+      "10": 302,
+      "01": 289
+    }
+  },
+  "note": "Real IBM Quantum hardware run."
 }
