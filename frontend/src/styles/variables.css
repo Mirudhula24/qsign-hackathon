@@ -7,12 +7,16 @@
   --ink: #2E1A47;
   --ink-secondary: #6B5D75;
   --accent: #7C3AED;
+  --accent-strong: #6D28D9;
+  --accent-soft: #EDE7FB;      /* light lilac — active pills, badge, chips */
+  --accent-soft-2: #F3EFFC;
   --success: #0F766E;
   --success-bg: #E4F3F1;
   --danger: #B4234A;
   --danger-bg: #FBE9EE;
   --border: #E7E1DB;
   --row-alt: #F2EEE8;
+  --disabled-bg: #D9D3E4;      /* lilac-grey — disabled CTA */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Fraunces', 'Source Serif 4', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
