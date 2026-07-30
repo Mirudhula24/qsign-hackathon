@@ -5,8 +5,9 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(__file__))
-from circuit import run_bell_circuit
+from circuit import run_bell_circuit, correlation_curve
 from crypto import hash_document, create_certificate, verify_certificate
+from hardware import load_hardware_result
 
 app = FastAPI(title="QSIGN API")
 
@@ -47,6 +48,16 @@ async def notarize(file: UploadFile = File(...)):
 @app.get("/audit")
 def audit():
     return {"notarizations": notarizations}
+
+@app.get("/correlation")
+def correlation():
+    # Quantum-vs-classical correlation curve for the proof visualization.
+    return {"status": "success", "data": correlation_curve()}
+
+@app.get("/hardware")
+def hardware():
+    # Real IBM Quantum hardware provenance (cached), for the proof panel.
+    return {"status": "success", "data": load_hardware_result()}
 
 @app.post("/verify")
 async def verify(

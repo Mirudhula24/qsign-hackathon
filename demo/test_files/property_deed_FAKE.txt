@@ -1,0 +1,12 @@
+PROPERTY DEED OF SALE
+=====================
+Deed No.    : QDX-2026-0042
+Property    : 123 Quantum Lane, Bell City, 600042
+Seller      : Alice Networks Pvt. Ltd.
+Buyer       : Mallory Vega
+Sale Price  : Rs. 8,40,000 (Eight Lakhs Forty Thousand Only)
+Date of Sale: 2026-07-30
+Registrar   : Sub-Registrar Office, Bell City
+
+This deed certifies the lawful transfer of the above property
+from the seller to the buyer for the consideration stated above.

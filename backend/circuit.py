@@ -43,5 +43,49 @@ def run_bell_circuit():
         "shots": shots,
     }
 
+# --- Correlation sweep -------------------------------------------------------
+# Sweeps the measurement-angle difference and records the ACTUAL correlation
+# measured on the quantum simulator at each angle, alongside the ideal quantum
+# prediction cos(2*delta) and the best a local (classical) hidden-variable model
+# can do (a straight line). The measured points hugging the cosine while pulling
+# away from the straight line is the visual proof of Bell violation.
+
+_correlation_cache = None
+
+def correlation_curve(points=13, shots=4096):
+    global _correlation_cache
+    if _correlation_cache is not None:
+        return _correlation_cache
+
+    curve = []
+    # delta sweeps 0 -> pi/2 (0 deg -> 90 deg): the window where quantum and
+    # classical predictions diverge most, and where the CHSH angles live.
+    for i in range(points):
+        delta = (np.pi / 2) * i / (points - 1)
+        measured = measure_chsh_correlator(0.0, delta, shots)   # theta_a = 0
+        quantum_theory = float(np.cos(2 * delta))
+        # Local hidden-variable prediction: linear from +1 at 0 deg to -1 at 90 deg.
+        classical = 1.0 - (4.0 / np.pi) * delta
+        curve.append({
+            "delta_deg": round(float(np.degrees(delta)), 2),
+            "measured": round(float(measured), 4),
+            "quantum_theory": round(quantum_theory, 4),
+            "classical": round(float(classical), 4),
+        })
+
+    bell = run_bell_circuit()
+    _correlation_cache = {
+        "curve": curve,
+        "shots": shots,
+        "backend": "AerSimulator",
+        "chsh_value": float(bell["chsh_value"]),
+        "classical_bound": 2.0,
+        "quantum_maximum": round(float(2 * np.sqrt(2)), 4),
+        # The four CHSH measurement-angle differences, for annotation on the plot.
+        "chsh_angles_deg": [22.5, 67.5],
+    }
+    return _correlation_cache
+
 if __name__ == "__main__":
     print(run_bell_circuit())
+    print(correlation_curve())
