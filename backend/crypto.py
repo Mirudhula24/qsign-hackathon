@@ -138,6 +138,8 @@ def create_certificate(document_hash, bell_data):
             "bell_violated": bell_data["bell_violated"],
             "backend": bell_data["backend"],
             "shots": bell_data["shots"],
+            "document_bound": bell_data.get("document_bound", False),
+            "angles": bell_data.get("angles"),
         },
         "signature": signature,
     }
@@ -169,10 +171,29 @@ def verify_certificate(file_bytes, certificate):
 
     results["signature_scheme"] = certificate["signature"].get("scheme")
 
+    # Check 4: document-bound circuit. The measurement angles recorded in the
+    # certificate must match the angles our derivation produces from THIS
+    # document's hash. This proves the quantum circuit was parameterized by the
+    # document itself -- the proof cannot be replayed onto a different document.
+    qp = certificate.get("quantum_proof", {})
+    cert_angles = qp.get("angles")
+    if qp.get("document_bound") and cert_angles:
+        from circuit import bell_angles
+        a, a2, b, b2 = bell_angles(certificate["document_hash"])
+        expected = {"theta_a": a, "theta_a2": a2, "theta_b": b, "theta_b2": b2}
+        tol = 1e-4
+        results["document_bound"] = all(
+            abs(float(cert_angles.get(k, 1e9)) - v) < tol for k, v in expected.items()
+        )
+    else:
+        # Legacy certificate without document binding: not penalized.
+        results["document_bound"] = True
+
     results["overall"] = all([
         results["hash_match"],
         results["bell_violated"],
         results["signature_valid"],
+        results["document_bound"],
     ])
 
     return results

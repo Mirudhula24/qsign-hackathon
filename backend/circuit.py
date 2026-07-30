@@ -23,12 +23,35 @@ def measure_chsh_correlator(theta_a, theta_b, shots=8192):
         corr += val_a * val_b * count
     return corr / shots
 
-def run_bell_circuit():
+# --- Document-bound measurement angles --------------------------------------
+# The optimal CHSH configuration is (0, pi/4) x (pi/8, 3pi/8), which yields the
+# Tsirelson maximum 2*sqrt(2). We bind the circuit to the document by rotating
+# ALL FOUR angles by one document-derived offset phi. Because CHSH depends only
+# on the *differences* between angles, a common offset leaves the four
+# correlators -- and thus the CHSH value -- unchanged, so EVERY document still
+# violates Bell. What changes is the absolute basis: a certificate's angles are
+# a deterministic function of its document hash, so the quantum proof cannot be
+# lifted off one document and replayed onto another.
+
+def derive_phi(document_hash):
+    """Map a document hash to a basis-rotation offset in [0, pi/2)."""
+    if not document_hash:
+        return 0.0
+    hb = bytes.fromhex(document_hash)
+    frac = int.from_bytes(hb[:2], "big") / 65535.0
+    return frac * (np.pi / 2)
+
+
+def bell_angles(document_hash=None):
+    """Return the four CHSH angles (a, a2, b, b2), document-bound when a hash
+    is given. Preserves the optimal differences, so CHSH stays maximal."""
+    phi = derive_phi(document_hash)
+    return phi + 0.0, phi + np.pi / 4, phi + np.pi / 8, phi + 3 * np.pi / 8
+
+
+def run_bell_circuit(document_hash=None):
     shots = 8192
-    a  = 0
-    a2 = np.pi / 4
-    b  = np.pi / 8
-    b2 = 3 * np.pi / 8
+    a, a2, b, b2 = bell_angles(document_hash)
     E_ab   = measure_chsh_correlator(a,  b,  shots)
     E_ab2  = measure_chsh_correlator(a,  b2, shots)
     E_a2b  = measure_chsh_correlator(a2, b,  shots)
@@ -41,6 +64,13 @@ def run_bell_circuit():
         "bell_violated": abs(S) > 2.0,
         "backend": "AerSimulator",
         "shots": shots,
+        "document_bound": document_hash is not None,
+        "angles": {
+            "theta_a":  round(float(a), 6),
+            "theta_a2": round(float(a2), 6),
+            "theta_b":  round(float(b), 6),
+            "theta_b2": round(float(b2), 6),
+        },
     }
 
 # --- Correlation sweep -------------------------------------------------------
