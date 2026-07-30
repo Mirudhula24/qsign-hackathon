@@ -1,27 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* ============================================================================
+   QSIGN Design System — "Legal Registry" (warm)
+   Navy authority + warm cream paper + sage surfaces + earth-brown seal/CTA.
+   One token set. Contrast is chosen so every label stays legible on its
+   surface AND on hover.
+   ========================================================================== */
 :root {
-  --bg: #FAF8F5;
-  --card-bg: #FFFFFF;
-  --ink: #2E1A47;
-  --ink-secondary: #6B5D75;
-  --accent: #7C3AED;
-  --success: #0F766E;
-  --success-bg: #E4F3F1;
-  --danger: #B4234A;
-  --danger-bg: #FBE9EE;
-  --border: #E7E1DB;
-  --row-alt: #F2EEE8;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Fraunces', 'Source Serif 4', Georgia, serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* --- Palette --- */
+  --navy: #0B2D52;            /* navbar, headings, icons, emphasis */
+  --navy-2: #123A64;
+  --bg: #F4E4C1;             /* warm cream page background */
+  --surface: #D7D7BE;        /* sage — cards, containers, footer */
+  --surface-2: #E4E3CF;      /* lighter sage — dropzone, alt rows */
+  --paper: #FBF6E9;          /* certificate parchment */
+  --card: #FFFFFF;           /* white — tables, inputs, verify result */
+  --brown: #99693C;          /* earth brown: CTA, wax seal, icon tiles, accents */
+  --brown-strong: #7C5330;
+  --brown-soft: #EFE2CE;
+  --border: #C7BC9C;         /* warm border, visible on cream + sage */
+  --border-cool: #C7BC9C;
+  --text: #2A2620;           /* primary text — strong contrast on cream/sage */
+  --text-secondary: #5E5644; /* secondary text — still legible on sage */
+  --success: #2F855A;
+  --success-bg: #E4EFE3;
+  --error: #C53030;
+  --error-bg: #F8E7DD;
+
+  /* --- Typography --- */
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* --- Radius --- */
+  --radius-card: 18px;
+  --radius-button: 14px;
+  --radius-input: 14px;
+  --radius-pill: 999px;
+
+  /* --- Shadow (single system) --- */
+  --shadow: 0 8px 24px rgba(43, 34, 20, 0.10);
+  --shadow-sm: 0 2px 8px rgba(43, 34, 20, 0.07);
+  --shadow-lg: 0 16px 40px rgba(43, 34, 20, 0.14);
+
+  /* --- Spacing (8px system) --- */
+  --sp-1: 8px; --sp-2: 16px; --sp-3: 24px; --sp-4: 32px;
+  --sp-5: 40px; --sp-6: 48px; --sp-8: 64px;
+
+  --maxw: 1440px;
+  --page-pad: 32px;
+  --t: 150ms ease;
 
   /* legacy aliases */
-  --navy: var(--ink);
-  --text-primary: var(--ink);
-  --text-secondary: var(--ink-secondary);
-  --muted-bg: var(--row-alt);
-  --danger-red: var(--danger);
+  --ink: var(--navy);
+  --ink-secondary: var(--text-secondary);
+  --accent: var(--brown);
+  --card-bg: var(--card);
+  --row-alt: var(--surface-2);
+  --danger: var(--error);
+  --danger-bg: var(--error-bg);
+  --card-shadow: var(--shadow);
+  --text-primary: var(--text);
 }

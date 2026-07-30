@@ -1,3 +1,5 @@
+import { Cpu } from 'lucide-react';
+
 interface IBMBadgeProps {
   backend?: unknown;
 }
@@ -8,8 +10,11 @@ export default function IBMBadge({ backend }: IBMBadgeProps) {
 
   return (
     <div className="ibm-badge">
-      <span>{isHardware ? 'Quantum hardware' : 'Quantum backend'}</span>
-      <strong>{backendName}</strong>
+      <Cpu size={20} strokeWidth={1.7} color="var(--navy)" />
+      <span className="ibm-badge__text">
+        <span>{isHardware ? 'IBM Quantum hardware' : 'Quantum backend'}</span>
+        <strong>{backendName}</strong>
+      </span>
     </div>
   );
 }

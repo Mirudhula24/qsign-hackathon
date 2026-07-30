@@ -1,3 +1,5 @@
+import { CheckCircle2, XCircle } from 'lucide-react';
+
 interface AuditRow {
   time: string;
   document: string;
@@ -17,24 +19,32 @@ export default function AuditTable({ rows }: AuditTableProps) {
           <tr>
             <th>Time</th>
             <th>Document</th>
-            <th>CHSH Score</th>
+            <th>CHSH</th>
+            <th>User</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
-            <tr><td colSpan={4} className="audit-table__empty">No notarizations have been issued in this backend session.</td></tr>
+            <tr><td colSpan={5} className="audit-table__empty">No records match — notarize a document to populate the ledger.</td></tr>
           ) : null}
-          {rows.map((row) => (
-            <tr key={`${row.time}-${row.document}`}>
-              <td>{row.time}</td>
-              <td>{row.document}</td>
-              <td className={row.chshScore > 2 ? 'audit-score audit-score--pass' : 'audit-score audit-score--fail'}>
-                {row.chshScore.toFixed(4)}
-              </td>
-              <td>{row.status}</td>
-            </tr>
-          ))}
+          {rows.map((row) => {
+            const pass = row.chshScore > 2;
+            return (
+              <tr key={`${row.time}-${row.document}`}>
+                <td className="mono">{row.time}</td>
+                <td>{row.document}</td>
+                <td className={pass ? 'audit-score--pass' : 'audit-score--fail'}>{row.chshScore.toFixed(4)}</td>
+                <td>QSIGN Authority</td>
+                <td>
+                  <span className={`status-pill ${row.status === 'Rejected' ? 'status-pill--fail' : 'status-pill--pass'}`}>
+                    {row.status === 'Rejected' ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
+                    {row.status}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

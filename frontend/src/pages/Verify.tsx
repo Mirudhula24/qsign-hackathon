@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { verify } from '../api/client';
 import Dropzone from '../components/Dropzone';
 import VerifyResult from '../components/VerifyResult';
@@ -85,8 +86,8 @@ export default function VerifyPage() {
 
         {error ? <p className="inline-message">{error}</p> : null}
 
-        <button className="button button--primary" type="button" onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Verifying…' : 'Verify Certificate'}
+        <button className="button button--primary button--block" type="button" onClick={handleSubmit} disabled={loading}>
+          <ShieldCheck size={16} /> {loading ? 'Verifying…' : 'Verify Certificate'}
         </button>
 
         {loading ? <p className="helper-text">Verifying…</p> : null}
