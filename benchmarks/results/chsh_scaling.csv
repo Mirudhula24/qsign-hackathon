@@ -1,0 +1,5 @@
+dataset,shots_per_correlator,total_shots,runtime_ms,runtime_stdev_ms,peak_mem_kb,chsh_mean,chsh_stdev,tsirelson_bound,success_rate,repeats
+small,1024,4096,146.6794,6.5537,192.46,2.8249,0.0436,2.8284,1.0,25
+medium,8192,32768,200.8542,5.3531,192.37,2.8309,0.0144,2.8284,1.0,25
+large,32768,131072,380.403,6.3491,191.83,2.8286,0.0073,2.8284,1.0,12
+stress,131072,524288,1093.0335,6.3254,192.62,2.8265,0.0039,2.8284,1.0,6

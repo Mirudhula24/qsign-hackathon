@@ -1,0 +1,5 @@
+optimization_level,depth,total_gates,one_qubit_gates,two_qubit_gates
+0,13,20,19,1
+1,8,10,9,1
+2,8,10,9,1
+3,8,10,9,1

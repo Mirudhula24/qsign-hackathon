@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import json
 import sys
 import os
@@ -8,7 +9,10 @@ import hashlib
 sys.path.append(os.path.dirname(__file__))
 from fastapi import Body
 from circuit import run_bell_circuit, correlation_curve
-from crypto import hash_document, create_certificate, verify_certificate
+from crypto import (
+    hash_document, create_certificate, verify_certificate,
+    issuer_public_key_b64, issuer_fingerprint, SIGNATURE_SCHEME,
+)
 from hardware import load_hardware_result
 from granite import generate_forensic_verdict
 
@@ -99,6 +103,16 @@ def hardware():
     # Real IBM Quantum hardware provenance (cached), for the proof panel.
     return {"status": "success", "data": load_hardware_result()}
 
+@app.get("/issuer")
+def issuer():
+    # Public identity of this QSIGN authority. Verifiers can pin this key.
+    return {
+        "status": "success",
+        "scheme": SIGNATURE_SCHEME,
+        "fingerprint": issuer_fingerprint(),
+        "public_key": issuer_public_key_b64(),
+    }
+
 @app.post("/verify")
 async def verify(
     file: UploadFile = File(...),
@@ -127,3 +141,15 @@ def verdict(payload: dict = Body(...)):
         payload.get("verification", {}), payload.get("certificate", {})
     )
     return {"status": "success", **v}
+
+@app.post("/certificate/pdf")
+def certificate_pdf(payload: dict = Body(...)):
+    # Render a certificate (+ optional verification result) as a PDF with a
+    # scannable QR verification token.
+    from pdf_certificate import build_certificate_pdf
+    cert = payload.get("certificate", payload)
+    verification = payload.get("verification")
+    verify_url = payload.get("verify_url", "http://127.0.0.1:5173")
+    pdf = build_certificate_pdf(cert, verification, verify_url)
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": 'attachment; filename="qsign_certificate.pdf"'})

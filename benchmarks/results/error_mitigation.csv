@@ -1,0 +1,4 @@
+readout_error,ideal_chsh,noisy_chsh,mitigated_chsh,gap_recovered_pct,noisy_violates,mitigated_violates
+3%,2.8376,2.4297,2.7537,79.4,yes,yes
+6%,2.8286,2.1987,2.8314,100.4,yes,yes
+10%,2.832,1.8093,2.8404,100.8,NO,yes

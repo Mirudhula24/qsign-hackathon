@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# QSIGN issuer secret key — never commit. Generated locally on first run.
+backend/issuer_key.json

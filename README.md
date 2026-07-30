@@ -41,14 +41,15 @@ Traditional security asks *"is this attacker powerful enough to break the math?"
 
 ## How it works
 
-QSIGN verifies every document against **four independent layers**. A certificate is accepted only if all four pass.
+QSIGN verifies every document against **five independent layers**. A certificate is accepted only if all five pass.
 
 | Layer | What it proves | How it is checked |
 |-------|----------------|-------------------|
 | **Document fingerprint** | The file is unaltered, to the byte | The document's hash must match the one sealed in the certificate |
 | **Quantum origin** | The certificate was born from real quantum measurement | The Bell–CHSH score must exceed the classical limit of 2.0 |
 | **Document-bound circuit** | The quantum proof belongs to *this* document and no other | The measurement angles must be the exact values derived from this document's hash |
-| **Post-quantum signature** | The certificate itself is authentic and untampered | A NIST ML-DSA-65 signature must validate against the issuer's public key |
+| **Post-quantum signature** | The certificate itself is authentic and untampered | A NIST ML-DSA-65 signature must validate |
+| **Trusted issuer** | It was issued by *the* QSIGN authority, not a self-signed forgery | The certificate's public key must match the authority's pinned key |
 
 ### The physics, in one paragraph
 
@@ -72,8 +73,8 @@ Verification results are not left as raw numbers. **IBM Granite**, running local
 
 QSIGN is a working web application with four workspaces:
 
-- **Notarize** — drop in any document and receive its quantum certificate, complete with the live CHSH score and a downloadable proof file.
-- **Verify** — upload a document and its certificate to run all four checks, with a color-coded pass/fail breakdown and an AI forensic verdict.
+- **Notarize** — drop in any document and receive its quantum certificate, downloadable as JSON **or as a professional PDF with a scannable QR verification code**.
+- **Verify** — upload a document and its certificate to run all five checks, with a color-coded pass/fail breakdown and an AI forensic verdict. A "Try to Forge It" mode lets anyone tamper with a certificate and watch every layer reject it.
 - **Quantum Proof** — an interactive view of the physics: the real IBM hardware provenance panel and a correlation curve showing measured quantum results diverging from the classical limit.
 - **Audit Log** — a tamper-evident, hash-chained ledger of every notarization, where altering any past record breaks the entire chain.
 
@@ -106,16 +107,43 @@ Two IBM technologies power the core of the product: **IBM Quantum** provides the
 - **No forgeable secret at the root.** The ultimate proof of origin is a physical measurement, not a stored key.
 - **Post-quantum by construction.** Certificates are signed with ML-DSA-65, safe against both classical and quantum adversaries.
 - **Independently auditable.** Hardware runs expose a public IBM Quantum job ID; the audit ledger is self-verifying.
-- **Tamper-evident end to end.** Any change to a document, certificate, or ledger entry is detected by at least one of the four verification layers.
+- **Tamper-evident end to end.** Any change to a document, certificate, or ledger entry is detected by at least one of the five verification layers.
+
+---
+
+## Benchmarks & honest comparison
+
+QSIGN is benchmarked against strong, production-grade classical baselines. Full report: [`BENCHMARKS.md`](BENCHMARKS.md) — reproduce with `python backend/benchmarks/run_all.py`.
+
+**Signatures (100 KB, measured):** classical RSA/ECDSA/Ed25519 are 10–600× faster and 5–50× smaller than ML-DSA-65 — *but every one of them is broken by Shor's algorithm on a quantum computer.* ML-DSA-65 trades speed and size for the quantum-safety QSIGN needs for records that must last decades.
+
+**Pipeline optimization:** the CHSH pipeline was made **2.7× faster** (581 ms → 216 ms) via a shared simulator and single batched job. Accuracy converges as ~1/√shots (CHSH stdev 0.036 → 0.004).
+
+**Where quantum helps — stated honestly:** QSIGN is *not* a runtime-speedup project. Its quantum advantage is **device-independent certification** and **post-quantum longevity**, not throughput (classical RNG is ~68,000× faster but not certifiable). See [`docs/QUANTUM_ADVANTAGE.md`](docs/QUANTUM_ADVANTAGE.md).
+
+---
+
+## Documentation
+
+| Doc | Contents |
+|-----|----------|
+| [Architecture](docs/ARCHITECTURE.md) | System design, data flow, five-layer trust model |
+| [Technical](docs/TECHNICAL.md) | Running it, optimizations, circuit & crypto internals |
+| [API](docs/API.md) | Every endpoint, request/response shapes |
+| [Quantum Advantage](docs/QUANTUM_ADVANTAGE.md) | Where quantum helps vs where classical suffices |
+| [Quantum Optimization](docs/QUANTUM_OPTIMIZATION.md) | Transpilation, error mitigation, shot & pipeline optimization |
+| [Classical Comparison](docs/CLASSICAL_COMPARISON.md) | Baselines, complexity, measured results |
+| [Scalability](docs/SCALABILITY.md) | Issuance vs verification scaling, bottlenecks |
+| [Benchmarks](BENCHMARKS.md) | Auto-generated report with tables & charts |
 
 ---
 
 ## Roadmap
 
 - Expanded quantum-hardware backends and automatic least-busy device selection
-- Native PDF certificates with embedded verification QR codes
-- Organization-level issuer identities and key rotation
-- Public verification portal for third parties
+- Certified quantum-randomness beacon to amortize the QPU across many certificates
+- Organization-level issuer identities backed by an HSM/KMS, with key rotation
+- Public verification portal and Merkle-checkpointed audit ledger
 
 ---
 
