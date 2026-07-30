@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { Landmark, Scale, Stethoscope, Stamp } from 'lucide-react';
 import { notarize } from '../api/client';
 import CertificateDocument from '../components/CertificateDocument';
 import Dropzone from '../components/Dropzone';
+import StatusSteps from '../components/StatusSteps';
 import type { Certificate } from '../types';
 
 const useCases = [
-  { title: 'Government Registries', text: 'Create a durable record for land, legal, or public filings.' },
-  { title: 'Court Evidence', text: 'Attach a physical-physics verification trail to chain-of-custody materials.' },
-  { title: 'Medical Records', text: 'Bind clinical documentation to an auditable origin state.' }
+  { icon: Landmark, title: 'Government Registries', text: 'Land deeds, birth certificates, and official state records with irrefutable quantum provenance.' },
+  { icon: Scale, title: 'Court Evidence', text: 'Forensic exhibits and affidavits whose integrity is physically guaranteed by Bell inequality.' },
+  { icon: Stethoscope, title: 'Medical Records', text: 'Clinical files notarized against a physically-certified origin state, not a software simulation.' }
 ];
+
+const STEPS = ['Upload', 'Quantum Circuit', 'Bell Test', 'Certificate', 'Complete'];
 
 export default function Notarize() {
   const [file, setFile] = useState<File | null>(null);
@@ -16,18 +20,17 @@ export default function Notarize() {
   const [error, setError] = useState('');
   const [certificate, setCertificate] = useState<Certificate | null>(null);
 
+  const current = certificate ? 4 : isLoading ? 2 : file ? 1 : 0;
+
   const handleSubmit = async () => {
     if (!file) {
       setError('Please upload a document before issuing a certificate.');
       return;
     }
-
     setError('');
     setIsLoading(true);
-
     try {
-      const result = await notarize(file);
-      setCertificate(result);
+      setCertificate(await notarize(file));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'An unexpected error occurred.');
       setCertificate(null);
@@ -48,36 +51,32 @@ export default function Notarize() {
   };
 
   return (
-    <section className="page page--narrow">
+    <section className="page">
       <header className="page__header">
-        <h1 className="page__title">Notarize a Document</h1>
-        <p className="page__subtitle">Your document will receive a quantum-certified signature validated against the Bell-CHSH inequality.</p>
+        <h1 className="page__title">Issue a Quantum Certificate</h1>
+        <p className="page__subtitle">Document integrity sealed by a Bell inequality test on real quantum hardware.</p>
       </header>
 
+      <StatusSteps steps={STEPS} current={current} />
+
       <div className="use-case-grid">
-        {useCases.map((item) => (
-          <article key={item.title} className="use-case-card">
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
+        {useCases.map(({ icon: Icon, title, text }) => (
+          <article key={title} className="use-case-card">
+            <span className="use-case-card__icon"><Icon size={22} strokeWidth={1.7} /></span>
+            <h3>{title}</h3>
+            <p>{text}</p>
           </article>
         ))}
       </div>
 
       <div className="card-shell stack">
-        <Dropzone
-          label="Document upload"
-          hint="Any file format accepted"
-          file={file}
-          onFileSelect={setFile}
-        />
+        <Dropzone label="Drop your document here" hint="PDF, DOCX, TXT — drag & drop or click" file={file} onFileSelect={setFile} />
 
         {error ? <p className="inline-message">{error}</p> : null}
 
-        <button className="button button--primary" type="button" onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? 'Generating certificate…' : 'Issue Certificate'}
+        <button className="button button--primary button--block" type="button" onClick={handleSubmit} disabled={isLoading || !file}>
+          <Stamp size={16} /> {isLoading ? 'Running quantum circuit…' : 'Issue Certificate'}
         </button>
-
-        {isLoading ? <p className="helper-text">Generating certificate…</p> : null}
 
         {certificate ? <CertificateDocument certificate={certificate as Record<string, unknown>} onDownload={handleDownload} /> : null}
       </div>

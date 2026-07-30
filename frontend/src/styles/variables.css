@@ -1,27 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* ============================================================================
+   QSIGN Design System — "Cool Legal Registry"
+   Navy authority + cool paper + slate surfaces + earth-brown seal/CTA.
+   One token set. Every component reads from here. No component-level colours.
+   ========================================================================== */
 :root {
-  --bg: #FAF8F5;
-  --card-bg: #FFFFFF;
-  --ink: #2E1A47;
-  --ink-secondary: #6B5D75;
-  --accent: #7C3AED;
-  --success: #0F766E;
-  --success-bg: #E4F3F1;
-  --danger: #B4234A;
-  --danger-bg: #FBE9EE;
-  --border: #E7E1DB;
-  --row-alt: #F2EEE8;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Fraunces', 'Source Serif 4', Georgia, serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* --- Palette --- */
+  --navy: #0B2D52;            /* primary: navbar, headings, icons, emphasis */
+  --navy-2: #123A64;
+  --bg: #EEF1F5;             /* cool page background */
+  --surface: #E3E8EE;        /* secondary surfaces, info cards, footer */
+  --surface-2: #E9EDF2;
+  --paper: #F6F3EC;          /* certificate parchment (kept warm for the document only) */
+  --card: #FFFFFF;           /* cards, tables, inputs */
+  --brown: #99693C;          /* earth brown: primary CTA, wax seal, small accents */
+  --brown-strong: #7E5530;
+  --brown-soft: #F1E9DF;
+  --border: #D6D2C8;         /* every border */
+  --border-cool: #D5DCE4;
+  --text: #1F2937;           /* primary text */
+  --text-secondary: #6B7280; /* secondary text */
+  --success: #2F855A;
+  --success-bg: #E7F2EC;
+  --error: #C53030;
+  --error-bg: #FBEBEB;
 
-  /* legacy aliases */
-  --navy: var(--ink);
-  --text-primary: var(--ink);
-  --text-secondary: var(--ink-secondary);
-  --muted-bg: var(--row-alt);
-  --danger-red: var(--danger);
+  /* --- Typography --- */
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;   /* headings */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* body */
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace; /* data */
+
+  /* --- Radius --- */
+  --radius-card: 18px;
+  --radius-button: 14px;
+  --radius-input: 14px;
+  --radius-pill: 999px;
+
+  /* --- Shadow (single system) --- */
+  --shadow: 0 8px 24px rgba(11, 45, 82, 0.08);
+  --shadow-sm: 0 2px 8px rgba(11, 45, 82, 0.06);
+  --shadow-lg: 0 16px 40px rgba(11, 45, 82, 0.12);
+
+  /* --- Spacing scale (8px system) --- */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-5: 40px;
+  --sp-6: 48px;
+  --sp-8: 64px;
+
+  --maxw: 1440px;
+  --page-pad: 32px;
+
+  /* --- Motion --- */
+  --t: 150ms ease;
+
+  /* legacy aliases so older class references keep resolving */
+  --ink: var(--navy);
+  --ink-secondary: var(--text-secondary);
+  --accent: var(--brown);
+  --card-bg: var(--card);
+  --row-alt: var(--surface-2);
+  --danger: var(--error);
+  --danger-bg: var(--error-bg);
+  --card-shadow: var(--shadow);
+  --text-primary: var(--text);
 }
