@@ -190,6 +190,7 @@ function NotarizePage() {
               <div><b>Circuit:</b> {cert.quantum_proof?.circuit}</div>
               <div><b>Backend:</b> {cert.quantum_proof?.backend}</div>
               <div><b>Bell violated:</b> {cert.quantum_proof?.bell_violated ? "Yes ✓" : "No ✗"}</div>
+              <div><b>Document-bound:</b> {cert.quantum_proof?.document_bound ? "Yes ✓ (angles derived from hash)" : "No"}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                 <span><b>Signature:</b> {cert.signature?.scheme}</span>
                 {isPostQuantum(cert.signature?.scheme) && (
@@ -217,12 +218,38 @@ function NotarizePage() {
   );
 }
 
+function firstFailure(r) {
+  if (!r) return "";
+  if (!r.hash_match) return "the document fingerprint does not match — the file was altered.";
+  if (!r.bell_violated) return `the Bell–CHSH score ${r.chsh_value} is below the classical bound of 2.0.`;
+  if (r.document_bound === false) return "the circuit angles were not derived from this document — a replayed proof.";
+  if (!r.signature_valid) return "the post-quantum signature is invalid.";
+  return "one or more checks failed.";
+}
+
+const SAMPLE_FORGE_CERT = {
+  document_hash: "paste-the-real-hash-here",
+  timestamp: "2026-07-30T09:00:00Z",
+  quantum_proof: {
+    circuit: "Bell_CHSH", chsh_value: 2.83, classical_bound: 2.0,
+    quantum_maximum: 2.8284, bell_violated: true, backend: "classical_prng",
+    shots: 8192, document_bound: true,
+    angles: { theta_a: 0, theta_a2: 0.7854, theta_b: 0.3927, theta_b2: 1.1781 },
+  },
+  signature: { scheme: "ML-DSA-65", public_key: "AAA…", signature_bytes: "AAA…" },
+};
+
 function VerifyPage() {
   const [docFile, setDocFile] = useState(null);
   const [certFile, setCertFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  const [forgeMode, setForgeMode] = useState(false);
+  const [forgeJson, setForgeJson] = useState("");
+  const [forgeResult, setForgeResult] = useState(null);
+  const [forgeLoading, setForgeLoading] = useState(false);
 
   async function handleVerify() {
     if (!docFile || !certFile) return;
@@ -240,17 +267,56 @@ function VerifyPage() {
     } finally { setLoading(false); }
   }
 
+  async function enterForge() {
+    setForgeMode(true); setForgeResult(null); setResult(null);
+    if (certFile) {
+      try { setForgeJson(await certFile.text()); return; } catch { /* fall through */ }
+    }
+    if (!forgeJson) setForgeJson(JSON.stringify(SAMPLE_FORGE_CERT, null, 2));
+  }
+
+  async function attemptForge() {
+    if (!docFile) return;
+    setForgeLoading(true); setForgeResult(null);
+    try {
+      const blob = new Blob([forgeJson], { type: "application/json" });
+      const fd = new FormData();
+      fd.append("file", docFile);
+      fd.append("certificate", new File([blob], "forge_attempt.json"));
+      const res = await fetch(`${API}/verify`, { method: "POST", body: fd });
+      const data = await res.json();
+      setForgeResult(data.verification || { error: "Malformed response" });
+    } catch {
+      setForgeResult({ error: "Backend not reachable, or the JSON is invalid." });
+    } finally { setForgeLoading(false); }
+  }
+
   const pass = result?.overall === true;
+  const tab = (active, color) => ({
+    padding: "6px 16px", borderRadius: 6, border: "none", cursor: "pointer",
+    fontSize: 13, fontWeight: 600,
+    background: active ? color : "#EEF0F3", color: active ? "#fff" : "#4A5568",
+  });
 
   return (
     <div>
       <h2 style={{ fontSize: 22, fontWeight: 600, color: "#0D1B3E", marginBottom: 6 }}>
         Verify a Certificate
       </h2>
-      <p style={{ fontSize: 14, color: "#4A5568", marginBottom: 24, lineHeight: 1.6 }}>
-        Upload the original document and its QSIGN certificate. The system checks
-        the document fingerprint, quantum origin score, and cryptographic signature.
+      <p style={{ fontSize: 14, color: "#4A5568", marginBottom: 20, lineHeight: 1.6 }}>
+        Upload the original document and its QSIGN certificate. The system checks the
+        document fingerprint, the quantum origin score, the document-bound circuit, and
+        the post-quantum signature.
       </p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+        <button onClick={() => setForgeMode(false)} style={tab(!forgeMode, "#0D1B3E")}>
+          Standard Verify
+        </button>
+        <button onClick={enterForge} style={tab(forgeMode, "#9B1C2E")}>
+          Try to Forge It
+        </button>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <div>
@@ -267,7 +333,53 @@ function VerifyPage() {
         </div>
       </div>
 
-      {docFile && certFile && (
+      {forgeMode && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#9B1C2E", marginBottom: 6 }}>
+            Edit the certificate and try to make it verify. Change{" "}
+            <code>chsh_value</code> to 1.74, or alter a value in <code>angles</code>, then
+            attempt the forgery — physics and the signature reject it.
+          </div>
+          <textarea
+            value={forgeJson}
+            onChange={e => setForgeJson(e.target.value)}
+            spellCheck={false}
+            style={{
+              width: "100%", height: 240, padding: 12, boxSizing: "border-box",
+              fontFamily: "monospace", fontSize: 11, lineHeight: 1.5,
+              border: "1px solid #E8B4BC", borderRadius: 6,
+              background: "#FAFBFC", color: "#1A1A2E", resize: "vertical",
+            }}
+          />
+          <button onClick={attemptForge} disabled={!docFile || forgeLoading} style={{
+            marginTop: 8, width: "100%", padding: "11px 0",
+            background: (!docFile || forgeLoading) ? "#D19AA3" : "#9B1C2E",
+            color: "#fff", border: "none", borderRadius: 6,
+            fontSize: 14, fontWeight: 700, cursor: (!docFile || forgeLoading) ? "not-allowed" : "pointer",
+          }}>
+            {!docFile ? "Upload a document first" : forgeLoading ? "Attempting…" : "Attempt Forgery"}
+          </button>
+
+          {forgeResult && (
+            <div style={{
+              marginTop: 12, padding: "14px 16px", borderRadius: 8, fontSize: 13, lineHeight: 1.6,
+              background: forgeResult.error ? "#FFF8EC" : forgeResult.overall ? "#E8F5EE" : "#FAEAEC",
+              border: `1px solid ${forgeResult.error ? "#F2D9A0" : forgeResult.overall ? "#B8DFC9" : "#E8B4BC"}`,
+              borderLeft: `4px solid ${forgeResult.error ? "#C77D00" : forgeResult.overall ? "#1A7A4A" : "#9B1C2E"}`,
+              color: forgeResult.error ? "#5C4300" : forgeResult.overall ? "#1A7A4A" : "#7B1D2E",
+              fontWeight: 600,
+            }}>
+              {forgeResult.error
+                ? `⚠ ${forgeResult.error}`
+                : forgeResult.overall
+                  ? "✅ Forgery accepted — this should not happen; the certificate is genuine."
+                  : `❌ Forgery rejected — ${firstFailure(forgeResult)}`}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!forgeMode && docFile && certFile && (
         <button onClick={handleVerify} disabled={loading} style={{
           width: "100%", padding: "12px 0",
           background: loading ? "#7A9CC5" : "#0D1B3E",
@@ -286,7 +398,7 @@ function VerifyPage() {
         </div>
       )}
 
-      {result && (
+      {!forgeMode && result && (
         <div>
           <div style={{
             padding: "20px 20px", borderRadius: 8, marginBottom: 16,
@@ -301,8 +413,8 @@ function VerifyPage() {
             </div>
             <div style={{ fontSize: 13, color: pass ? "#2D6A4F" : "#7B1D2E" }}>
               {pass
-                ? "All three quantum checks passed successfully."
-                : "Quantum origin check failed — certificate not generated by real quantum hardware."}
+                ? "All checks passed: fingerprint, quantum origin, document-bound circuit, and post-quantum signature."
+                : `Rejected because ${firstFailure(result)}`}
             </div>
           </div>
 
@@ -317,6 +429,13 @@ function VerifyPage() {
               label="Quantum Origin Score"
               ok={result.bell_violated}
               detail={`${result.chsh_value} ${result.bell_violated ? "> 2.0 ✓" : "< 2.0 — below classical bound ✗"}`}
+            />
+            <CheckRow
+              label="Document-Bound Circuit"
+              ok={result.document_bound !== false}
+              detail={result.document_bound === false
+                ? "Angles not derived from this document"
+                : "Angles match document hash"}
             />
             <CheckRow
               label="Cryptographic Signature"
@@ -351,6 +470,7 @@ function VerifyPage() {
 
 function AuditPage() {
   const [logs, setLogs] = useState(null);
+  const [chainValid, setChainValid] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -360,6 +480,7 @@ function AuditPage() {
       const res = await fetch(`${API}/audit`);
       const data = await res.json();
       setLogs(data.notarizations || []);
+      setChainValid(data.chain_valid);
     } catch {
       setError("Cannot reach the backend. Make sure uvicorn is running on port 8000.");
     } finally { setLoading(false); }
@@ -372,9 +493,21 @@ function AuditPage() {
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 600, color: "#0D1B3E", marginBottom: 6 }}>
             Audit Log
+            {chainValid !== null && (
+              <span style={{
+                marginLeft: 12, fontSize: 11, fontWeight: 700, letterSpacing: 0.4,
+                padding: "3px 9px", borderRadius: 4, verticalAlign: "middle",
+                color: chainValid ? "#1A7A4A" : "#9B1C2E",
+                background: chainValid ? "#E8F5EE" : "#FAEAEC",
+                border: `1px solid ${chainValid ? "#B8DFC9" : "#E8B4BC"}`,
+              }}>
+                {chainValid ? "🔗 LEDGER INTACT" : "⚠ LEDGER TAMPERED"}
+              </span>
+            )}
           </h2>
           <p style={{ fontSize: 14, color: "#4A5568" }}>
-            A record of all notarizations performed in this session.
+            A hash-chained record of all notarizations. Each entry commits to the previous
+            one, so altering any past record breaks the chain.
           </p>
         </div>
         <button onClick={fetchLogs} disabled={loading} style={{
@@ -411,7 +544,7 @@ function AuditPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#F4F6F9" }}>
-                {["Time", "Document", "CHSH Score", "Status"].map(h => (
+                {["Time", "Document", "CHSH Score", "Chain Hash", "Status"].map(h => (
                   <th key={h} style={{
                     padding: "10px 16px", textAlign: "left",
                     fontSize: 11, fontWeight: 600, color: "#4A5568",
@@ -435,6 +568,11 @@ function AuditPage() {
                     fontSize: 13, color: row.chsh_value > 2 ? "#1A7A4A" : "#9B1C2E",
                     fontWeight: 600 }}>
                     {row.chsh_value}
+                  </td>
+                  <td style={{ padding: "12px 16px", fontFamily: "monospace",
+                    fontSize: 12, color: "#8A909A" }}
+                    title={row.entry_hash}>
+                    {row.entry_hash ? row.entry_hash.slice(0, 10) + "…" : "—"}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     <Badge ok={row.status === "Verified"}>{row.status}</Badge>
