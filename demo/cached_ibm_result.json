@@ -1,50 +1,45 @@
 {
   "status": "complete",
-  "source": "simulator_dryrun",
-  "backend": "AerSimulator",
-  "job_id": "dry-run-local",
+  "source": "ibm_hardware",
+  "backend": "ibm_marrakesh",
+  "job_id": "d9lgds8ii2cc73ehfjtg",
   "shots": 4096,
-  "timestamp": "2026-07-30T11:54:00Z",
-  "chsh_value": 2.8311,
+  "timestamp": "2026-07-30T13:40:36Z",
+  "chsh_value": 2.6958,
   "classical_bound": 2.0,
   "quantum_maximum": 2.8284,
   "bell_violated": true,
   "correlators": {
-    "E_ab": 0.7251,
-    "E_ab2": -0.7056,
-    "E_a2b": 0.7012,
-    "E_a2b2": 0.6992
+    "E_ab": 0.6772,
+    "E_ab2": -0.6646,
+    "E_a2b": 0.6426,
+    "E_a2b2": 0.7114
   },
   "counts": {
     "E_ab": {
-      "00": 1742,
-      "11": 1791,
-      "01": 280,
-      "10": 283
+      "11": 1689,
+      "00": 1746,
+      "01": 316,
+      "10": 345
     },
     "E_ab2": {
-      "01": 1755,
-      "10": 1738,
-      "11": 304,
-      "00": 299
+      "10": 1693,
+      "00": 383,
+      "01": 1716,
+      "11": 304
     },
     "E_a2b": {
-      "00": 1744,
-      "10": 296,
-      "11": 1740,
-      "01": 316
+      "00": 1765,
+      "11": 1599,
+      "10": 352,
+      "01": 380
     },
     "E_a2b2": {
-      "00": 1746,
-      "11": 1734,
-      "01": 319,
-      "10": 297
+      "00": 1828,
+      "11": 1677,
+      "10": 302,
+      "01": 289
     }
   },
-  "note": "Local AerSimulator dry-run for validation (NOT real hardware). Run backend/real_hardware.py --run with IBM credentials to replace this with a genuine ibm hardware CHSH.",
-  "prior_hardware_job": {
-    "job_id": "d9jq9lbhdfks73cin280",
-    "backend": "ibm_marrakesh",
-    "note": "A Bell circuit was previously submitted to real IBM hardware. Retrieve its counts with: python backend/real_hardware.py --retrieve d9jq9lbhdfks73cin280 (note: that job was a single correlator; --run submits all 4 for a full CHSH)."
-  }
+  "note": "Real IBM Quantum hardware run."
 }
