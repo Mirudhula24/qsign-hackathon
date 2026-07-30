@@ -107,6 +107,24 @@ function NotarizePage() {
     a.download = `qsign_cert_${Date.now()}.json`; a.click();
   }
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+  async function downloadPdf() {
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`${API}/certificate/pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ certificate: cert, verify_url: window.location.origin }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `qsign_certificate_${Date.now()}.pdf`; a.click();
+    } catch {
+      setError("Could not generate the PDF. Make sure the backend is running.");
+    } finally { setPdfLoading(false); }
+  }
+
   const chsh = cert?.quantum_proof?.chsh_value;
 
   return (
@@ -210,14 +228,24 @@ function NotarizePage() {
             </div>
           </div>
 
-          <button onClick={downloadCert} style={{
-            width: "100%", padding: "10px 0",
-            background: "#fff", color: "#0D1B3E",
-            border: "1.5px solid #0D1B3E", borderRadius: 6,
-            fontSize: 14, fontWeight: 600, cursor: "pointer",
-          }}>
-            Download Certificate (.json)
-          </button>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button onClick={downloadCert} style={{
+              width: "100%", padding: "10px 0",
+              background: "#fff", color: "#0D1B3E",
+              border: "1.5px solid #0D1B3E", borderRadius: 6,
+              fontSize: 14, fontWeight: 600, cursor: "pointer",
+            }}>
+              Download .json
+            </button>
+            <button onClick={downloadPdf} disabled={pdfLoading} style={{
+              width: "100%", padding: "10px 0",
+              background: pdfLoading ? "#7A9CC5" : "#0D1B3E", color: "#fff",
+              border: "1.5px solid #0D1B3E", borderRadius: 6,
+              fontSize: 14, fontWeight: 600, cursor: pdfLoading ? "not-allowed" : "pointer",
+            }}>
+              {pdfLoading ? "Generating…" : "Download PDF + QR"}
+            </button>
+          </div>
         </div>
       )}
     </div>

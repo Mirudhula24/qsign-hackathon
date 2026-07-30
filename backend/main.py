@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import json
 import sys
 import os
@@ -140,3 +141,15 @@ def verdict(payload: dict = Body(...)):
         payload.get("verification", {}), payload.get("certificate", {})
     )
     return {"status": "success", **v}
+
+@app.post("/certificate/pdf")
+def certificate_pdf(payload: dict = Body(...)):
+    # Render a certificate (+ optional verification result) as a PDF with a
+    # scannable QR verification token.
+    from pdf_certificate import build_certificate_pdf
+    cert = payload.get("certificate", payload)
+    verification = payload.get("verification")
+    verify_url = payload.get("verify_url", "http://127.0.0.1:5173")
+    pdf = build_certificate_pdf(cert, verification, verify_url)
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": 'attachment; filename="qsign_certificate.pdf"'})

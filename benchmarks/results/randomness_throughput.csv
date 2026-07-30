@@ -1,0 +1,4 @@
+source,type,bits_per_sec,certifiable
+Classical CSPRNG (os.urandom),classical,"22,399,296,318",no (trust device/seed)
+Classical PRNG (Mersenne Twister),classical,"4,938,298,446",no (deterministic)
+Quantum Bell sampling (AerSimulator),quantum,"326,108",yes (device-independent)

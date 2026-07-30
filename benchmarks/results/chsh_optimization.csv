@@ -1,0 +1,3 @@
+impl,runtime_ms
+naive (1 sim + 1 job per correlator),581.06
+optimized (shared sim + batched job),216.376

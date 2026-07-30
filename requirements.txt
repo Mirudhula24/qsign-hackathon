@@ -1,3 +1,4 @@
+# --- Core ---
 qiskit==2.5.1
 qiskit-aer==0.17.2
 qiskit-ibm-runtime==0.48.0
@@ -5,4 +6,20 @@ fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
 numpy==2.4.1
+
+# --- Post-quantum signatures ---
 dilithium-py==1.4.0
+
+# --- Classical baselines (RSA / ECDSA / Ed25519) for benchmarking ---
+cryptography==46.0.4
+
+# --- Benchmarking + reporting ---
+matplotlib==3.10.8
+psutil==7.2.2
+
+# --- PDF + QR certificates ---
+reportlab==5.0.0
+qrcode[pil]==8.2
+
+# IBM Granite forensic verdict runs on a local Ollama server (granite3.3:2b);
+# it is an external service, not a pip dependency. See docs/TECHNICAL.md.

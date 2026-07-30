@@ -1,37 +1,35 @@
+"""
+Bell-CHSH quantum circuits for QSIGN.
+
+Optimizations over the original implementation (see docs/TECHNICAL.md):
+  1. A single AerSimulator instance is created once and reused, instead of one
+     per correlator measurement (constructing the simulator dominated runtime).
+  2. The four CHSH correlators — and the thirteen correlation-curve points — are
+     executed as ONE batched job (a list of circuits in a single .run() call)
+     instead of N sequential jobs, removing per-job scheduling overhead.
+  3. Circuits are transpiled in a single pass.
+  4. Results (correlation curve) are cached.
+A naive reference implementation is kept below for the benchmark suite to
+measure the speedup against.
+"""
+
+import hashlib
+import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
-import numpy as np
 
-def measure_chsh_correlator(theta_a, theta_b, shots=8192):
-    simulator = AerSimulator()
-    qc = QuantumCircuit(2, 2)
-    qc.h(0)
-    qc.cx(0, 1)
-    qc.ry(-2 * theta_a, 0)
-    qc.ry(-2 * theta_b, 1)
-    qc.measure(0, 0)
-    qc.measure(1, 1)
-    compiled = transpile(qc, simulator)
-    job = simulator.run(compiled, shots=shots)
-    counts = job.result().get_counts()
-    corr = 0
-    for outcome, count in counts.items():
-        a = int(outcome[1])
-        b = int(outcome[0])
-        val_a = 1 - 2 * a
-        val_b = 1 - 2 * b
-        corr += val_a * val_b * count
-    return corr / shots
+# One reusable simulator for the whole process (optimization #1).
+_SIM = AerSimulator()
+
+# Optimal CHSH configuration -> Tsirelson maximum 2*sqrt(2).
+_BASE_A, _BASE_A2 = 0.0, np.pi / 4
+_BASE_B, _BASE_B2 = np.pi / 8, 3 * np.pi / 8
+
 
 # --- Document-bound measurement angles --------------------------------------
-# The optimal CHSH configuration is (0, pi/4) x (pi/8, 3pi/8), which yields the
-# Tsirelson maximum 2*sqrt(2). We bind the circuit to the document by rotating
-# ALL FOUR angles by one document-derived offset phi. Because CHSH depends only
-# on the *differences* between angles, a common offset leaves the four
-# correlators -- and thus the CHSH value -- unchanged, so EVERY document still
-# violates Bell. What changes is the absolute basis: a certificate's angles are
-# a deterministic function of its document hash, so the quantum proof cannot be
-# lifted off one document and replayed onto another.
+# All four angles are rotated by one document-derived offset phi. CHSH depends
+# only on angle DIFFERENCES, so a common offset keeps the value maximal while
+# binding the absolute basis to the document hash (anti-replay).
 
 def derive_phi(document_hash):
     """Map a document hash to a basis-rotation offset in [0, pi/2)."""
@@ -46,21 +44,60 @@ def bell_angles(document_hash=None):
     """Return the four CHSH angles (a, a2, b, b2), document-bound when a hash
     is given. Preserves the optimal differences, so CHSH stays maximal."""
     phi = derive_phi(document_hash)
-    return phi + 0.0, phi + np.pi / 4, phi + np.pi / 8, phi + 3 * np.pi / 8
+    return phi + _BASE_A, phi + _BASE_A2, phi + _BASE_B, phi + _BASE_B2
 
 
-def run_bell_circuit(document_hash=None):
-    shots = 8192
+def _chsh_circuit(theta_a, theta_b):
+    qc = QuantumCircuit(2, 2)
+    qc.h(0)
+    qc.cx(0, 1)
+    qc.ry(-2 * theta_a, 0)
+    qc.ry(-2 * theta_b, 1)
+    qc.measure(0, 0)
+    qc.measure(1, 1)
+    return qc
+
+
+def _correlator_from_counts(counts, shots):
+    """<Z x Z> from a 2-bit counts dict. Only up to four outcomes, so this is a
+    tight loop rather than a numpy vectorization (vectorizing four values would
+    add overhead, not remove it)."""
+    corr = 0
+    for outcome, n in counts.items():
+        a = int(outcome[-1])   # qubit 0 (rightmost bit)
+        b = int(outcome[-2])   # qubit 1
+        corr += (1 - 2 * a) * (1 - 2 * b) * n
+    return corr / shots
+
+
+def _run_batched(angle_pairs, shots):
+    """Execute all (theta_a, theta_b) circuits as a single batched job.
+    Returns a list of counts dicts, one per pair (optimization #2 and #3)."""
+    circuits = [_chsh_circuit(ta, tb) for ta, tb in angle_pairs]
+    compiled = transpile(circuits, _SIM)
+    result = _SIM.run(compiled, shots=shots).result()
+    counts = result.get_counts()
+    if isinstance(counts, dict):        # single circuit -> normalize to list
+        counts = [counts]
+    return counts
+
+
+def measure_chsh_correlator(theta_a, theta_b, shots=8192):
+    """Single correlator (kept for API compatibility / spot checks)."""
+    counts = _run_batched([(theta_a, theta_b)], shots)[0]
+    return _correlator_from_counts(counts, shots)
+
+
+def run_bell_circuit(document_hash=None, shots=8192):
     a, a2, b, b2 = bell_angles(document_hash)
-    E_ab   = measure_chsh_correlator(a,  b,  shots)
-    E_ab2  = measure_chsh_correlator(a,  b2, shots)
-    E_a2b  = measure_chsh_correlator(a2, b,  shots)
-    E_a2b2 = measure_chsh_correlator(a2, b2, shots)
+    pairs = [(a, b), (a, b2), (a2, b), (a2, b2)]
+    counts = _run_batched(pairs, shots)               # one batched job
+    E_ab, E_ab2, E_a2b, E_a2b2 = (_correlator_from_counts(c, shots) for c in counts)
     S = E_ab - E_ab2 + E_a2b + E_a2b2
     return {
         "chsh_value": round(abs(S), 4),
         "classical_bound": 2.0,
-        "quantum_maximum": round(2*np.sqrt(2), 4),
+        "quantum_maximum": round(float(2 * np.sqrt(2)), 4),
         "bell_violated": abs(S) > 2.0,
         "backend": "AerSimulator",
         "shots": shots,
@@ -73,34 +110,25 @@ def run_bell_circuit(document_hash=None):
         },
     }
 
-# --- Correlation sweep -------------------------------------------------------
-# Sweeps the measurement-angle difference and records the ACTUAL correlation
-# measured on the quantum simulator at each angle, alongside the ideal quantum
-# prediction cos(2*delta) and the best a local (classical) hidden-variable model
-# can do (a straight line). The measured points hugging the cosine while pulling
-# away from the straight line is the visual proof of Bell violation.
 
+# --- Correlation sweep -------------------------------------------------------
 _correlation_cache = None
 
 def correlation_curve(points=13, shots=4096):
     global _correlation_cache
-    if _correlation_cache is not None:
+    if _correlation_cache is not None:            # optimization #4: cache
         return _correlation_cache
 
+    deltas = [(np.pi / 2) * i / (points - 1) for i in range(points)]
+    counts = _run_batched([(0.0, d) for d in deltas], shots)   # one batched job
     curve = []
-    # delta sweeps 0 -> pi/2 (0 deg -> 90 deg): the window where quantum and
-    # classical predictions diverge most, and where the CHSH angles live.
-    for i in range(points):
-        delta = (np.pi / 2) * i / (points - 1)
-        measured = measure_chsh_correlator(0.0, delta, shots)   # theta_a = 0
-        quantum_theory = float(np.cos(2 * delta))
-        # Local hidden-variable prediction: linear from +1 at 0 deg to -1 at 90 deg.
-        classical = 1.0 - (4.0 / np.pi) * delta
+    for d, c in zip(deltas, counts):
+        measured = _correlator_from_counts(c, shots)
         curve.append({
-            "delta_deg": round(float(np.degrees(delta)), 2),
+            "delta_deg": round(float(np.degrees(d)), 2),
             "measured": round(float(measured), 4),
-            "quantum_theory": round(quantum_theory, 4),
-            "classical": round(float(classical), 4),
+            "quantum_theory": round(float(np.cos(2 * d)), 4),
+            "classical": round(float(1.0 - (4.0 / np.pi) * d), 4),
         })
 
     bell = run_bell_circuit()
@@ -111,10 +139,27 @@ def correlation_curve(points=13, shots=4096):
         "chsh_value": float(bell["chsh_value"]),
         "classical_bound": 2.0,
         "quantum_maximum": round(float(2 * np.sqrt(2)), 4),
-        # The four CHSH measurement-angle differences, for annotation on the plot.
         "chsh_angles_deg": [22.5, 67.5],
     }
     return _correlation_cache
+
+
+# --- Naive reference (benchmark baseline only) -------------------------------
+# The original one-simulator-per-call, one-job-per-correlator implementation.
+# Used by backend/benchmarks/bench_chsh.py to quantify the optimization.
+
+def run_bell_circuit_naive(document_hash=None, shots=8192):
+    a, a2, b, b2 = bell_angles(document_hash)
+
+    def corr(ta, tb):
+        sim = AerSimulator()                       # fresh simulator each call
+        qc = _chsh_circuit(ta, tb)
+        counts = sim.run(transpile(qc, sim), shots=shots).result().get_counts()
+        return _correlator_from_counts(counts, shots)
+
+    S = corr(a, b) - corr(a, b2) + corr(a2, b) + corr(a2, b2)
+    return abs(S)
+
 
 if __name__ == "__main__":
     print(run_bell_circuit())
