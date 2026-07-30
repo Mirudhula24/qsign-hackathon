@@ -6,9 +6,11 @@ import os
 import hashlib
 
 sys.path.append(os.path.dirname(__file__))
+from fastapi import Body
 from circuit import run_bell_circuit, correlation_curve
 from crypto import hash_document, create_certificate, verify_certificate
 from hardware import load_hardware_result
+from granite import generate_forensic_verdict
 
 app = FastAPI(title="QSIGN API")
 
@@ -114,4 +116,14 @@ async def verify(
     return {
         "status": "success",
         "verification": result,
+        "certificate": cert_data,
     }
+
+@app.post("/verdict")
+def verdict(payload: dict = Body(...)):
+    # Plain-English forensic verdict via local IBM Granite (Ollama), with an
+    # honest rule-based fallback if the model is unavailable.
+    v = generate_forensic_verdict(
+        payload.get("verification", {}), payload.get("certificate", {})
+    )
+    return {"status": "success", **v}

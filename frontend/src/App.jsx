@@ -227,76 +227,50 @@ function firstFailure(r) {
   return "one or more checks failed.";
 }
 
-const SAMPLE_FORGE_CERT = {
-  document_hash: "paste-the-real-hash-here",
-  timestamp: "2026-07-30T09:00:00Z",
-  quantum_proof: {
-    circuit: "Bell_CHSH", chsh_value: 2.83, classical_bound: 2.0,
-    quantum_maximum: 2.8284, bell_violated: true, backend: "classical_prng",
-    shots: 8192, document_bound: true,
-    angles: { theta_a: 0, theta_a2: 0.7854, theta_b: 0.3927, theta_b2: 1.1781 },
-  },
-  signature: { scheme: "ML-DSA-65", public_key: "AAA…", signature_bytes: "AAA…" },
-};
-
 function VerifyPage() {
   const [docFile, setDocFile] = useState(null);
   const [certFile, setCertFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [verdict, setVerdict] = useState(null);
   const [error, setError] = useState(null);
-
-  const [forgeMode, setForgeMode] = useState(false);
-  const [forgeJson, setForgeJson] = useState("");
-  const [forgeResult, setForgeResult] = useState(null);
-  const [forgeLoading, setForgeLoading] = useState(false);
 
   async function handleVerify() {
     if (!docFile || !certFile) return;
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setVerdict(null);
     try {
       const fd = new FormData();
       fd.append("file", docFile);
       fd.append("certificate", certFile);
       const res = await fetch(`${API}/verify`, { method: "POST", body: fd });
       const data = await res.json();
-      if (data.status === "success") setResult(data.verification);
-      else setError("Verification failed. Please try again.");
+      if (data.status === "success") {
+        setResult(data.verification);
+        fetchVerdict(data.verification, data.certificate);
+      } else {
+        setError("Verification failed. Please try again.");
+      }
     } catch {
       setError("Cannot reach the backend. Make sure uvicorn is running on port 8000.");
     } finally { setLoading(false); }
   }
 
-  async function enterForge() {
-    setForgeMode(true); setForgeResult(null); setResult(null);
-    if (certFile) {
-      try { setForgeJson(await certFile.text()); return; } catch { /* fall through */ }
-    }
-    if (!forgeJson) setForgeJson(JSON.stringify(SAMPLE_FORGE_CERT, null, 2));
-  }
-
-  async function attemptForge() {
-    if (!docFile) return;
-    setForgeLoading(true); setForgeResult(null);
+  async function fetchVerdict(verification, certificate) {
+    setVerdict({ loading: true });
     try {
-      const blob = new Blob([forgeJson], { type: "application/json" });
-      const fd = new FormData();
-      fd.append("file", docFile);
-      fd.append("certificate", new File([blob], "forge_attempt.json"));
-      const res = await fetch(`${API}/verify`, { method: "POST", body: fd });
+      const res = await fetch(`${API}/verdict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verification, certificate }),
+      });
       const data = await res.json();
-      setForgeResult(data.verification || { error: "Malformed response" });
+      setVerdict(data);
     } catch {
-      setForgeResult({ error: "Backend not reachable, or the JSON is invalid." });
-    } finally { setForgeLoading(false); }
+      setVerdict(null);
+    }
   }
 
   const pass = result?.overall === true;
-  const tab = (active, color) => ({
-    padding: "6px 16px", borderRadius: 6, border: "none", cursor: "pointer",
-    fontSize: 13, fontWeight: 600,
-    background: active ? color : "#EEF0F3", color: active ? "#fff" : "#4A5568",
-  });
 
   return (
     <div>
@@ -308,15 +282,6 @@ function VerifyPage() {
         document fingerprint, the quantum origin score, the document-bound circuit, and
         the post-quantum signature.
       </p>
-
-      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-        <button onClick={() => setForgeMode(false)} style={tab(!forgeMode, "#0D1B3E")}>
-          Standard Verify
-        </button>
-        <button onClick={enterForge} style={tab(forgeMode, "#9B1C2E")}>
-          Try to Forge It
-        </button>
-      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <div>
@@ -333,53 +298,7 @@ function VerifyPage() {
         </div>
       </div>
 
-      {forgeMode && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#9B1C2E", marginBottom: 6 }}>
-            Edit the certificate and try to make it verify. Change{" "}
-            <code>chsh_value</code> to 1.74, or alter a value in <code>angles</code>, then
-            attempt the forgery — physics and the signature reject it.
-          </div>
-          <textarea
-            value={forgeJson}
-            onChange={e => setForgeJson(e.target.value)}
-            spellCheck={false}
-            style={{
-              width: "100%", height: 240, padding: 12, boxSizing: "border-box",
-              fontFamily: "monospace", fontSize: 11, lineHeight: 1.5,
-              border: "1px solid #E8B4BC", borderRadius: 6,
-              background: "#FAFBFC", color: "#1A1A2E", resize: "vertical",
-            }}
-          />
-          <button onClick={attemptForge} disabled={!docFile || forgeLoading} style={{
-            marginTop: 8, width: "100%", padding: "11px 0",
-            background: (!docFile || forgeLoading) ? "#D19AA3" : "#9B1C2E",
-            color: "#fff", border: "none", borderRadius: 6,
-            fontSize: 14, fontWeight: 700, cursor: (!docFile || forgeLoading) ? "not-allowed" : "pointer",
-          }}>
-            {!docFile ? "Upload a document first" : forgeLoading ? "Attempting…" : "Attempt Forgery"}
-          </button>
-
-          {forgeResult && (
-            <div style={{
-              marginTop: 12, padding: "14px 16px", borderRadius: 8, fontSize: 13, lineHeight: 1.6,
-              background: forgeResult.error ? "#FFF8EC" : forgeResult.overall ? "#E8F5EE" : "#FAEAEC",
-              border: `1px solid ${forgeResult.error ? "#F2D9A0" : forgeResult.overall ? "#B8DFC9" : "#E8B4BC"}`,
-              borderLeft: `4px solid ${forgeResult.error ? "#C77D00" : forgeResult.overall ? "#1A7A4A" : "#9B1C2E"}`,
-              color: forgeResult.error ? "#5C4300" : forgeResult.overall ? "#1A7A4A" : "#7B1D2E",
-              fontWeight: 600,
-            }}>
-              {forgeResult.error
-                ? `⚠ ${forgeResult.error}`
-                : forgeResult.overall
-                  ? "✅ Forgery accepted — this should not happen; the certificate is genuine."
-                  : `❌ Forgery rejected — ${firstFailure(forgeResult)}`}
-            </div>
-          )}
-        </div>
-      )}
-
-      {!forgeMode && docFile && certFile && (
+      {docFile && certFile && (
         <button onClick={handleVerify} disabled={loading} style={{
           width: "100%", padding: "12px 0",
           background: loading ? "#7A9CC5" : "#0D1B3E",
@@ -398,7 +317,7 @@ function VerifyPage() {
         </div>
       )}
 
-      {!forgeMode && result && (
+      {result && (
         <div>
           <div style={{
             padding: "20px 20px", borderRadius: 8, marginBottom: 16,
@@ -445,6 +364,31 @@ function VerifyPage() {
                 : "Invalid"}
             />
           </div>
+
+          {verdict && (
+            <div style={{
+              padding: "14px 16px", background: "#F4F6F9", border: "1px solid #E2E6EC",
+              borderLeft: "4px solid #0F62FE", borderRadius: 8, marginBottom: 16,
+              fontSize: 13, color: "#1A1A2E", lineHeight: 1.75,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#8A909A",
+                  textTransform: "uppercase", letterSpacing: 1 }}>
+                  Forensic Verdict
+                </span>
+                {verdict.model && (
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4,
+                    padding: "2px 7px", borderRadius: 4, background: "#E4EEFF",
+                    color: "#0F3D91", border: "1px solid #B8D0FF" }}>
+                    {verdict.model}
+                  </span>
+                )}
+              </div>
+              {verdict.loading
+                ? <span style={{ color: "#8A909A" }}>Generating forensic analysis…</span>
+                : (verdict.verdict || "Forensic analysis unavailable.")}
+            </div>
+          )}
 
           {!result.bell_violated && (
             <div style={{
