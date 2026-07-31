@@ -1,4 +1,4 @@
-import type { AuditRow, Certificate, VerifyResult } from '../types';
+import type { AuditRow, Certificate, VerifyResult, ForensicVerdict, HardwareResult, CorrelationData } from '../types';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -32,7 +32,7 @@ export async function notarize(file: File): Promise<Certificate> {
   throw new Error('Unexpected response from QSIGN /notarize endpoint');
 }
 
-export async function verify(document: File, certificate: File): Promise<VerifyResult> {
+export async function verify(document: File, certificate: File): Promise<{ verification: VerifyResult; certificate: Certificate | null }> {
   const formData = new FormData();
   // Backend expects `file` and `certificate`
   formData.append('file', document);
@@ -43,9 +43,33 @@ export async function verify(document: File, certificate: File): Promise<VerifyR
     body: formData
   });
 
-  // backend response: { status, verification }
-  if (res && res.verification) return res.verification as VerifyResult;
+  // backend response: { status, verification, certificate }
+  if (res && res.verification) {
+    return { verification: res.verification as VerifyResult, certificate: (res.certificate ?? null) as Certificate | null };
+  }
   throw new Error('Unexpected response from QSIGN /verify endpoint');
+}
+
+// Plain-English forensic verdict via local IBM Granite (rule-based fallback on the backend).
+export async function getVerdict(verification: VerifyResult, certificate: Certificate | null): Promise<ForensicVerdict> {
+  const res = await requestJson('/verdict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ verification, certificate })
+  });
+  return { verdict: res.verdict ?? '', model: res.model ?? null };
+}
+
+// Real IBM Quantum hardware provenance (cached).
+export async function getHardware(): Promise<HardwareResult> {
+  const res = await requestJson('/hardware');
+  return (res?.data ?? {}) as HardwareResult;
+}
+
+// Quantum-vs-classical correlation curve.
+export async function getCorrelation(): Promise<CorrelationData | null> {
+  const res = await requestJson('/correlation');
+  return (res?.data ?? null) as CorrelationData | null;
 }
 
 export async function checkHealth(): Promise<boolean> {

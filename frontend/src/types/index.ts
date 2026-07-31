@@ -40,3 +40,39 @@ export interface AuditRow {
   chshScore: number;
   status: 'Verified' | 'Rejected';
 }
+
+export interface ForensicVerdict {
+  verdict: string;
+  model: string | null;
+}
+
+export interface HardwareResult {
+  status?: string;
+  source?: string | null;
+  backend?: string;
+  job_id?: string;
+  chsh_value?: number;
+  bell_violated?: boolean;
+  classical_bound?: number;
+  quantum_maximum?: number;
+  shots?: number;
+  timestamp?: string;
+  note?: string;
+  correlators?: Record<string, number>;
+  prior_hardware_job?: { job_id?: string; backend?: string; note?: string };
+}
+
+export interface CorrelationPoint {
+  delta_deg: number;
+  measured: number;
+  quantum_theory: number;
+  classical: number;
+}
+
+export interface CorrelationData {
+  curve: CorrelationPoint[];
+  chsh_value: number;
+  classical_bound: number;
+  quantum_maximum: number;
+  chsh_angles_deg: number[];
+}
