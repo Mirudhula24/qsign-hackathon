@@ -87,7 +87,7 @@ export default function VerifyPage() {
       </div>
 
       <div className="card-shell stack">
-        <div className="use-case-grid">
+        <div className="upload-grid">
           <Dropzone label="Original document" hint="Upload the exact source file" file={documentFile} onFileSelect={setDocumentFile} />
           <Dropzone label="QSIGN certificate (.json)" hint="Upload the certificate produced by QSIGN" file={certificateFile} onFileSelect={setCertificateFile} accept="application/json,.json" />
         </div>
