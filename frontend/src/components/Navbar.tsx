@@ -5,6 +5,7 @@ const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/notarize', label: 'Notarize', end: false },
   { to: '/verify', label: 'Verify', end: false },
+  { to: '/proof', label: 'Quantum Proof', end: false },
   { to: '/audit', label: 'Audit', end: false }
 ];
 

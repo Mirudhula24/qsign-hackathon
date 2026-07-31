@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { verify } from '../api/client';
+import { verify, getVerdict } from '../api/client';
 import Dropzone from '../components/Dropzone';
 import VerifyResult from '../components/VerifyResult';
-import type { VerifyResult as VerifyResultType } from '../types';
+import ForensicVerdict from '../components/ForensicVerdict';
+import type { VerifyResult as VerifyResultType, ForensicVerdict as ForensicVerdictType } from '../types';
 
 const tabItems = [
   { key: 'standard', label: 'Standard Verification' },
@@ -15,6 +16,7 @@ export default function VerifyPage() {
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [result, setResult] = useState<VerifyResultType | null>(null);
+  const [verdict, setVerdict] = useState<(ForensicVerdictType & { loading?: boolean }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,13 +50,19 @@ export default function VerifyPage() {
 
     setError('');
     setLoading(true);
+    setVerdict(null);
 
     try {
       const certificateForVerification = activeTab === 'forged'
         ? await createForgedCertificate(certificateFile)
         : certificateFile;
       const response = await verify(documentFile, certificateForVerification);
-      setResult(response);
+      setResult(response.verification);
+      // Fetch the AI forensic verdict in the background — never blocks the checks.
+      setVerdict({ verdict: '', model: null, loading: true });
+      getVerdict(response.verification, response.certificate)
+        .then((v) => setVerdict(v))
+        .catch(() => setVerdict(null));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'An unexpected error occurred.');
       setResult(null);
@@ -93,6 +101,7 @@ export default function VerifyPage() {
         {loading ? <p className="helper-text">Verifying…</p> : null}
 
         {result ? <VerifyResult result={result as Record<string, unknown>} /> : null}
+        {result && verdict ? <ForensicVerdict verdict={verdict.verdict} model={verdict.model} loading={verdict.loading} /> : null}
       </div>
 
       {activeTab === 'forged' ? <p className="page__note">This test alters the uploaded certificate’s CHSH value to 1.5000 before sending it to the unchanged backend. The backend then returns the failed Bell check and invalid signature.</p> : null}
